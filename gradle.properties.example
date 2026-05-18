@@ -1,0 +1,28 @@
+# Notask Flow Android local Gradle properties template.
+# Copy this file to gradle.properties, then adjust machine-specific paths and API endpoints.
+# The real gradle.properties is ignored by Git.
+
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+kotlin.code.style=official
+org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+
+# Prefer setting JAVA_HOME in your shell or Android Studio.
+# Uncomment only when CLI builds need an explicit JDK 21 path.
+# org.gradle.java.home=D\:\\Development\\JAVA\\jdk-21
+
+# Debug REST API base URL.
+# Android emulator: http://10.0.2.2:8080/
+# Physical device: http://<your-computer-lan-ip>:8080/
+notask.debugApiBaseUrl=http://10.0.2.2:8080/
+
+# Debug collaboration WebSocket URL.
+# If Web/Vite or nginx proxies /ws on port 3000, use ws://<host>:3000/ws.
+# If connecting directly to collab-ws, use ws://<host>:8081/ws.
+notask.debugCollabWsUrl=ws://10.0.2.2:3000/ws
+
+# Release REST API base URL. Use your HTTPS API domain before packaging release builds.
+notask.releaseApiBaseUrl=https://api.example.com/
+
+# Release collaboration WebSocket URL. Usually served by the same domain reverse proxy.
+notask.releaseCollabWsUrl=wss://api.example.com/ws

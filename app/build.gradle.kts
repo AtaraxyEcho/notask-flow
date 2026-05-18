@@ -19,12 +19,8 @@ android {
     }
 
     buildTypes {
-        debug {
-            buildConfigField("String", "BASE_URL", "\"http://192.168.1.20:8080/\"")
-        }
         release {
             isMinifyEnabled = true
-            buildConfigField("String", "BASE_URL", "\"https://api.notaskflow.com/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

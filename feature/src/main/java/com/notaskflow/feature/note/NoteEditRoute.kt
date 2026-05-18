@@ -2850,7 +2850,7 @@ private fun resolveCollabWsUrl(): String {
     } else {
         "ws"
     }
-    val host = baseUri.host ?: "192.168.1.20"
+    val host = baseUri.host ?: DEFAULT_ANDROID_EMULATOR_HOST
     return "$protocol://$host:8081/ws"
 }
 
@@ -4665,6 +4665,7 @@ private const val COLLAB_KERNEL_SEGMENT = "__collab__"
 private const val COLLAB_KERNEL_SCRIPT_NAME = "editor.js"
 private const val COLLAB_KERNEL_SEGMENT_COUNT = 2
 private const val COLLAB_KERNEL_ASSET_PATH = "notask_collab/editor.js"
+private const val DEFAULT_ANDROID_EMULATOR_HOST = "10.0.2.2"
 private const val EDITOR_ASSET_MARKER = "__asset__"
 private const val EDITOR_ASSET_SPACES_SEGMENT = "spaces"
 private const val EDITOR_ASSET_FILES_SEGMENT = "files"

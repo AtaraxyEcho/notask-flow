@@ -4,6 +4,15 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+fun normalizeApiBaseUrl(value: String): String = if (value.endsWith("/")) value else "$value/"
+
+fun buildConfigString(value: String): String {
+    val escapedValue = value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+    return "\"$escapedValue\""
+}
+
 android {
     namespace = "com.notaskflow.data"
     compileSdk = 35
@@ -14,12 +23,28 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"http://192.168.1.20:8080/\"")
-            buildConfigField("String", "COLLAB_WS_URL", "\"ws://192.168.1.20:3000/ws\"")
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                buildConfigString(normalizeApiBaseUrl(providers.gradleProperty("notask.debugApiBaseUrl").orElse("http://10.0.2.2:8080/").get()))
+            )
+            buildConfigField(
+                "String",
+                "COLLAB_WS_URL",
+                buildConfigString(providers.gradleProperty("notask.debugCollabWsUrl").orElse("ws://10.0.2.2:3000/ws").get())
+            )
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://api.notaskflow.com/\"")
-            buildConfigField("String", "COLLAB_WS_URL", "\"wss://api.notaskflow.com/ws\"")
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                buildConfigString(normalizeApiBaseUrl(providers.gradleProperty("notask.releaseApiBaseUrl").orElse("https://api.example.com/").get()))
+            )
+            buildConfigField(
+                "String",
+                "COLLAB_WS_URL",
+                buildConfigString(providers.gradleProperty("notask.releaseCollabWsUrl").orElse("wss://api.example.com/ws").get())
+            )
         }
     }
 
