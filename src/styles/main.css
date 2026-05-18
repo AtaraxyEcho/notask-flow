@@ -1,0 +1,377 @@
+@import './themes/personal-warm.css';
+@import './themes/personal-dark.css';
+@import './themes/personal-forest.css';
+@import './themes/personal-ocean.css';
+@import './themes/team.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material Symbols configuration */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Global styles */
+body {
+  @apply bg-background text-on-background font-body-main antialiased;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+button {
+  @apply transition;
+}
+
+input,
+textarea,
+select {
+  @apply font-body-main;
+}
+
+a {
+  @apply transition-colors;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary-container text-on-primary-container;
+}
+
+/* Custom scrollbar */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: 10px;
+}
+
+/* Ambient shadow utility */
+.shadow-ambient {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Glass card for team space */
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(205, 229, 255, 0.3);
+}
+
+.app-card {
+  @apply rounded-[1.5rem] border border-outline-variant bg-surface-container-lowest p-5 shadow-[0_12px_30px_rgba(0,0,0,0.04)];
+}
+
+.app-shell {
+  @apply rounded-[2rem] border border-outline-variant bg-surface-container-lowest p-6 shadow-[0_16px_40px_rgba(0,0,0,0.05)];
+}
+
+.app-sidebar {
+  @apply sticky top-20 h-[calc(100vh-6rem)] w-[260px] shrink-0 rounded-[2rem] border border-outline-variant bg-[#f4f1f0] p-5 shadow-[0_14px_30px_rgba(0,0,0,0.04)];
+}
+
+.team-shell {
+  background: rgba(240, 249, 255, 0.78);
+  backdrop-filter: blur(18px);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 119, 182, 0.1);
+}
+
+.team-main-shell {
+  background-image:
+    radial-gradient(circle at top left, rgba(80, 217, 254, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(0, 119, 182, 0.12), transparent 34%);
+}
+
+.app-input {
+  @apply rounded-2xl border border-outline-variant bg-surface-container-low text-on-surface shadow-none outline-none transition focus:border-primary focus:bg-surface-container-lowest focus:ring-0;
+}
+
+.app-input:focus,
+.app-input:focus-within {
+  box-shadow: 0 0 0 3px rgba(159, 65, 34, 0.12);
+}
+
+.app-chip {
+  @apply inline-flex items-center gap-2 rounded-full bg-surface-container px-3 py-1 text-caption uppercase tracking-[0.2em] text-on-surface-variant;
+}
+
+.app-icon-button {
+  @apply flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant bg-surface text-on-surface hover:bg-surface-container-low;
+}
+
+.app-primary-button {
+  @apply inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-label-bold text-on-primary shadow-ambient hover:brightness-110;
+}
+
+.app-secondary-button {
+  @apply inline-flex items-center gap-2 rounded-full border border-outline-variant bg-surface px-5 py-3 text-label-bold text-on-surface hover:bg-surface-container-low;
+}
+
+.app-nav-item {
+  @apply flex items-center gap-3 rounded-2xl px-4 py-3 text-body-secondary text-on-surface-variant hover:bg-white/70 hover:text-on-surface;
+}
+
+.app-nav-item-active {
+  @apply bg-surface text-primary shadow-sm;
+}
+
+.team-nav-item {
+  @apply text-primary hover:bg-white/60 hover:text-primary;
+}
+
+.team-nav-item-active {
+  @apply bg-primary text-white shadow-[0_12px_30px_rgba(0,119,182,0.18)];
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+  @apply font-title-serif text-on-surface;
+}
+
+.markdown-preview h1 {
+  @apply mb-4 text-4xl;
+}
+
+.markdown-preview h2 {
+  @apply mb-3 mt-8 text-2xl;
+}
+
+.markdown-preview h3 {
+  @apply mb-3 mt-6 text-xl;
+}
+
+.markdown-preview p,
+.markdown-preview li,
+.markdown-preview blockquote {
+  @apply text-body-main leading-8 text-on-surface-variant;
+}
+
+.markdown-preview ul {
+  @apply my-4 list-disc space-y-2 pl-6;
+}
+
+.markdown-preview blockquote {
+  @apply my-4 rounded-2xl border-l-4 border-primary bg-primary-fixed px-5 py-4;
+}
+
+.markdown-preview pre {
+  @apply my-5 overflow-x-auto rounded-2xl bg-[#241f1d] p-4 text-sm text-white;
+}
+
+.markdown-preview code {
+  @apply rounded bg-surface-container px-1.5 py-0.5 text-sm text-primary;
+}
+
+.markdown-preview .markdown-gap {
+  @apply h-2;
+}
+
+.markdown-preview .markdown-empty {
+  @apply py-12 text-center text-body-secondary text-on-surface-variant;
+}
+
+.markdown-preview .notask-media-link {
+  @apply my-2 inline-flex max-w-full items-center rounded-full border bg-surface-container-low px-3 py-1.5 text-body-main font-semibold text-primary shadow-sm transition hover:border-primary hover:bg-primary-fixed;
+  border-color: color-mix(in srgb, var(--outline-variant) 40%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.markdown-preview .notask-media-card {
+  @apply my-4 grid w-full items-center gap-3 rounded-[1.15rem] border p-3 shadow-sm;
+  background: linear-gradient(135deg, var(--surface-container-lowest), var(--surface-container-low));
+  border-color: rgba(221, 192, 184, 0.52);
+  box-shadow: 0 14px 34px rgba(74, 55, 47, 0.09);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  max-width: 560px;
+}
+
+.markdown-preview .notask-media-card-icon {
+  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary;
+  box-shadow: 0 10px 22px rgba(159, 65, 34, 0.24);
+}
+
+.markdown-preview .notask-media-card-body {
+  @apply flex min-w-0 flex-1 flex-col gap-1;
+}
+
+.markdown-preview .notask-media-card-name {
+  @apply truncate text-body-main font-semibold text-on-surface;
+}
+
+.markdown-preview .notask-media-card-meta {
+  @apply truncate text-caption text-on-surface-variant;
+}
+
+.markdown-preview .notask-media-card-player {
+  @apply mt-2 h-9 w-full;
+  max-width: 360px;
+}
+
+.markdown-preview .notask-media-card-link {
+  @apply shrink-0 rounded-full bg-surface px-3 py-1.5 text-caption font-semibold text-primary shadow-sm;
+}
+
+@media (max-width: 640px) {
+  .markdown-preview .notask-media-card {
+    @apply w-full;
+    grid-template-columns: auto minmax(0, 1fr);
+    max-width: 100%;
+  }
+
+  .markdown-preview .notask-media-card-link {
+    @apply col-start-2 self-start;
+  }
+}
+
+/* Element Plus overrides */
+.el-button--primary {
+  --el-button-bg-color: var(--primary);
+  --el-button-border-color: var(--primary);
+  --el-button-hover-bg-color: var(--primary-container);
+  --el-button-hover-border-color: var(--primary-container);
+  --el-button-text-color: var(--on-primary);
+}
+
+.el-overlay {
+  background: rgba(30, 27, 25, 0.18) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.el-dialog {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(221, 192, 184, 0.45);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  overflow: hidden;
+}
+
+.el-drawer {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.el-dialog__header {
+  padding-bottom: 0;
+  margin-right: 0;
+  border-bottom: 1px solid rgba(221, 192, 184, 0.24);
+}
+
+.el-drawer__header {
+  margin-bottom: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(221, 192, 184, 0.24);
+}
+
+.el-drawer__body {
+  padding-top: 1rem;
+}
+
+.el-select__wrapper,
+.el-date-editor.el-input__wrapper,
+.el-date-editor.el-range-editor.el-input__wrapper {
+  min-height: 3.25rem;
+  border-radius: 1rem;
+  background: var(--surface-container-lowest);
+  box-shadow: 0 0 0 1px var(--outline-variant) inset;
+}
+
+.el-select__wrapper.is-focused,
+.el-date-editor.el-input__wrapper.is-focus,
+.el-date-editor.el-range-editor.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.el-select-dropdown__item.is-selected {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.dark .el-dialog,
+.dark .el-drawer {
+  background: rgba(20, 18, 16, 0.92);
+  border-color: rgba(86, 66, 60, 0.7);
+}
+
+.el-tabs__item.is-active,
+.el-tabs__item:hover {
+  color: var(--primary);
+}
+
+.el-tabs__active-bar {
+  background-color: var(--primary);
+}
+
+/* Page transitions */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.2s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(8px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+/* List item transitions */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.25s ease;
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.list-move {
+  transition: transform 0.25s ease;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    @apply rounded-[1.5rem] p-4;
+  }
+}
