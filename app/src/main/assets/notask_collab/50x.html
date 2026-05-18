@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>服务暂时不可用 - Notask Flow</title>
+    <style>
+      :root {
+        --background: #fff8f6;
+        --surface: rgba(255, 255, 255, 0.82);
+        --surface-soft: #f5ece9;
+        --primary: #9f4122;
+        --primary-soft: #ffdbd0;
+        --text: #1e1b19;
+        --muted: #56423c;
+        --outline: #ddc0b8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(255, 219, 208, 0.9), transparent 34%),
+          radial-gradient(circle at 78% 24%, rgba(255, 181, 158, 0.42), transparent 30%),
+          linear-gradient(135deg, var(--background), var(--surface-soft));
+        color: var(--text);
+        font-family:
+          "Plus Jakarta Sans",
+          "PingFang SC",
+          "Microsoft YaHei",
+          system-ui,
+          sans-serif;
+      }
+
+      .page {
+        position: relative;
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .page::before,
+      .page::after {
+        position: absolute;
+        width: 360px;
+        height: 360px;
+        border-radius: 999px;
+        content: "";
+        filter: blur(20px);
+        opacity: 0.36;
+      }
+
+      .page::before {
+        top: -140px;
+        left: -80px;
+        background: var(--primary-soft);
+      }
+
+      .page::after {
+        right: -120px;
+        bottom: -150px;
+        background: #ffb59e;
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        width: min(560px, 100%);
+        overflow: hidden;
+        border: 1px solid rgba(221, 192, 184, 0.82);
+        border-radius: 30px;
+        background: var(--surface);
+        box-shadow: 0 24px 70px rgba(63, 34, 24, 0.12);
+        backdrop-filter: blur(18px);
+      }
+
+      .accent {
+        height: 8px;
+        background: linear-gradient(90deg, #9f4122, #ff8a65, #ffdbd0);
+      }
+
+      .content {
+        padding: 44px;
+        text-align: center;
+      }
+
+      .code {
+        margin: 0;
+        color: var(--primary);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(68px, 14vw, 132px);
+        font-weight: 700;
+        letter-spacing: -0.08em;
+        line-height: 0.9;
+      }
+
+      h1 {
+        margin: 24px 0 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(28px, 5vw, 40px);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        margin: 16px auto 0;
+        max-width: 420px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.9;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      a,
+      button {
+        min-width: 132px;
+        height: 44px;
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      button {
+        border: 1px solid var(--outline);
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--primary);
+      }
+
+      .hint {
+        margin-top: 26px;
+        color: rgba(86, 66, 60, 0.7);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 560px) {
+        .content {
+          padding: 34px 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="card" aria-labelledby="error-title">
+        <div class="accent"></div>
+        <div class="content">
+          <div class="code" aria-hidden="true">5xx</div>
+          <h1 id="error-title">服务正在短暂休整</h1>
+          <p>
+            Notask Flow 暂时无法连接到后端服务，可能是服务启动中、网络波动或维护更新。请稍后重试。
+          </p>
+          <div class="actions">
+            <button type="button" onclick="window.location.reload()">重新加载</button>
+            <a href="/">返回首页</a>
+          </div>
+          <div class="hint">Notask Flow · Service unavailable</div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

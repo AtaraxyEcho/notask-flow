@@ -5,9 +5,9 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class ApiResponse<T>(
-    @Json(name = "code") val code: Int,
-    @Json(name = "message") val message: String?,
-    @Json(name = "data") val data: T?
+    @param:Json(name = "code") val code: Int,
+    @param:Json(name = "message") val message: String?,
+    @param:Json(name = "data") val data: T?
 ) {
     fun isSuccess(): Boolean = code == SUCCESS_CODE
 
@@ -18,10 +18,21 @@ data class ApiResponse<T>(
         throw ApiException(code = code, responseMessage = message ?: "接口请求失败")
     }
 
+    fun requireSuccess() {
+        if (!isSuccess()) {
+            throw ApiException(code = code, responseMessage = message ?: "接口请求失败")
+        }
+    }
+
     private companion object {
         const val SUCCESS_CODE = 200
     }
 }
+
+@JsonClass(generateAdapter = true)
+data class EmptyResponse(
+    @param:Json(name = "ok") val ok: Boolean? = null
+)
 
 class ApiException(
     val code: Int,

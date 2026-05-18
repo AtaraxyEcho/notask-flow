@@ -24,6 +24,8 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":domain"))
 
+    implementation(libs.androidx.core.ktx)
+
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

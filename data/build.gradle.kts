@@ -11,6 +11,21 @@ android {
     defaultConfig {
         minSdk = 26
     }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.20:8080/\"")
+            buildConfigField("String", "COLLAB_WS_URL", "\"ws://192.168.1.20:3000/ws\"")
+        }
+        release {
+            buildConfigField("String", "BASE_URL", "\"https://api.notaskflow.com/\"")
+            buildConfigField("String", "COLLAB_WS_URL", "\"wss://api.notaskflow.com/ws\"")
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {

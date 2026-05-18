@@ -1,16 +1,17 @@
 package com.notaskflow.core.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -21,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -30,11 +32,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.notaskflow.core.R
 import com.notaskflow.core.model.SpaceType
 import com.notaskflow.core.ui.theme.TeamColors
 
@@ -56,24 +62,50 @@ fun SpaceAwareTopAppBar(
     modifier: Modifier = Modifier
 ) {
     val isTeam = spaceType == SpaceType.TEAM
-    val topBarContent = if (isTeam) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val actionTint = if (isTeam) TeamColors.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val avatarBackground = if (isTeam) TeamColors.primaryFixed else MaterialTheme.colorScheme.surfaceVariant
 
     TopAppBar(
         modifier = modifier,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Logo 区域
-                Text(
-                    text = "Notask Flow",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (isTeam) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Surface(
+                    modifier = Modifier
+                        .size(30.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = if (isTeam) BorderStroke(1.dp, TeamColors.glassBorder) else null
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(R.drawable.notask_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(26.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Column(modifier = Modifier.widthIn(max = if (isTeam) 108.dp else 102.dp)) {
+                    Text(
+                        text = "Notask Flow",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                        color = if (isTeam) TeamColors.primary else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = if (isTeam) spaceName else "个人工作台",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = if (isTeam) TeamColors.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         },
         actions = {
-            // 空间切换器
             SpaceSwitcher(
                 currentSpace = currentSpace,
                 spaces = spaces,
@@ -81,26 +113,24 @@ fun SpaceAwareTopAppBar(
                 onCreateTeamSpace = onCreateTeamSpace,
                 onJoinTeam = onJoinTeam
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(2.dp))
 
             // 搜索按钮
             IconButton(
                 onClick = onSearchClick,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "搜索",
-                    tint = if (isTeam) MaterialTheme.colorScheme.onPrimary
-                           else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    tint = actionTint,
+                    modifier = Modifier.size(19.dp)
                 )
             }
 
-            // 通知铃铛（含未读角标）
             IconButton(
                 onClick = onNotificationClick,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 BadgedBox(
                     badge = {
@@ -120,23 +150,21 @@ fun SpaceAwareTopAppBar(
                     Icon(
                         imageVector = Icons.Filled.Notifications,
                         contentDescription = "通知",
-                        tint = if (isTeam) MaterialTheme.colorScheme.onPrimary
-                               else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                        tint = actionTint,
+                        modifier = Modifier.size(19.dp)
                     )
                 }
             }
 
-            // 用户头像
             IconButton(
                 onClick = onProfileClick,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(avatarBackground),
                     contentAlignment = Alignment.Center
                 ) {
                     if (userAvatarUrl != null) {
@@ -153,7 +181,7 @@ fun SpaceAwareTopAppBar(
                         Icon(
                             imageVector = Icons.Filled.Person,
                             contentDescription = "个人资料",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = actionTint,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -161,8 +189,8 @@ fun SpaceAwareTopAppBar(
             }
         },
         colors = if (isTeam) TopAppBarDefaults.topAppBarColors(
-            containerColor = TeamColors.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = TeamColors.glassBackground,
+            titleContentColor = TeamColors.onSurface
         ) else TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface

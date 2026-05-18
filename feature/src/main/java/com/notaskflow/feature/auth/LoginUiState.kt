@@ -8,3 +8,7 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
+
+sealed interface LoginEffect {
+    data object LoginSuccess : LoginEffect
+}

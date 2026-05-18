@@ -29,6 +29,7 @@ dependencies {
     api(libs.lifecycle.runtime.compose)
     api(libs.lifecycle.viewmodel.compose)
     api(libs.coil.compose)
+    api(libs.coil.network.okhttp)
     api(libs.androidx.core.ktx)
     api(libs.activity.compose)
 

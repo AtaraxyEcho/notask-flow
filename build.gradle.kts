@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -10,6 +11,10 @@ plugins {
 }
 
 subprojects {
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
+
     pluginManager.withPlugin("com.android.application") {
         extensions.configure<ApplicationExtension>("android") {
             compileOptions {

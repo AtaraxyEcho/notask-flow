@@ -22,52 +22,59 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.notaskflow.core.R
+import com.notaskflow.core.common.formatDateTimeText
 import com.notaskflow.core.model.SpaceType
 import com.notaskflow.core.ui.components.BottomNavTab
+import com.notaskflow.core.ui.components.PersonalSpaceTabs
 import com.notaskflow.core.ui.components.SpaceAwareBottomNavBar
 import com.notaskflow.core.ui.components.SpaceAwareTopAppBar
 import com.notaskflow.core.ui.components.SpaceItem
-import com.notaskflow.core.ui.theme.SunriseColors
+import com.notaskflow.core.ui.components.TeamSpaceTabs
+import com.notaskflow.domain.model.Note
+import com.notaskflow.domain.model.PersonalNoteTrend
+import com.notaskflow.domain.model.Todo
 import com.notaskflow.feature.file.FileBrowserRoute
+import com.notaskflow.feature.members.MembersRoute
 import com.notaskflow.feature.note.NoteListRoute
+import com.notaskflow.feature.project.ProjectRoute
 import com.notaskflow.feature.stats.StatsRoute
 import com.notaskflow.feature.task.TaskListRoute
 import com.notaskflow.feature.todo.TodoListRoute
@@ -75,22 +82,38 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun HomeRoute(
-    onNavigateToNoteEdit: () -> Unit = {},
+    currentSpace: SpaceItem? = null,
+    spaces: List<SpaceItem> = emptyList(),
+    initialTab: BottomNavTab? = null,
+    unreadNotificationCount: Int = 0,
+    userAvatarUrl: String? = null,
+    onSpaceSelected: (SpaceItem) -> Unit = {},
+    onNavigateToCreateTeam: () -> Unit = {},
+    onNavigateToJoinTeam: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToNoteEdit: (Long?) -> Unit = {},
+    onNavigateToProject: (Long) -> Unit = {},
+    onNavigateToTaskDetail: (Long) -> Unit = {},
+    onNavigateToFilePreview: (Long) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     onNavigateToTaskCreate: () -> Unit = {},
     onNavigateToTodoCreate: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableStateOf(BottomNavTab.HOME) }
-    var currentSpace by remember { mutableStateOf(
-        SpaceItem(id = 0, name = "我的笔记空间", type = SpaceType.PERSONAL)
-    )}
+    var selectedTab by rememberSaveable(initialTab) { mutableStateOf(initialTab ?: BottomNavTab.HOME) }
     var isSpaceTransitioning by remember { mutableStateOf(false) }
 
-    val spaces = remember {
-        listOf(
-            SpaceItem(id = 0, name = "我的笔记空间", type = SpaceType.PERSONAL),
-            SpaceItem(id = 1, name = "产品开发团队", type = SpaceType.TEAM, memberCount = 12),
-            SpaceItem(id = 2, name = "设计团队", type = SpaceType.TEAM, memberCount = 8, hasUnread = true)
-        )
+    val effectiveSpaces = spaces
+    val effectiveCurrentSpace = currentSpace ?: SpaceItem(
+        id = EMPTY_SPACE_ID,
+        name = "未选择空间",
+        type = SpaceType.PERSONAL
+    )
+    val hasRealSpace = currentSpace != null && spaces.isNotEmpty()
+    val maxContentWidth = if (effectiveCurrentSpace.type == SpaceType.TEAM) {
+        TEAM_MAX_CONTENT_WIDTH
+    } else {
+        PERSONAL_MAX_CONTENT_WIDTH
     }
 
     LaunchedEffect(isSpaceTransitioning) {
@@ -99,56 +122,98 @@ fun HomeRoute(
             isSpaceTransitioning = false
         }
     }
+    LaunchedEffect(effectiveCurrentSpace.type) {
+        val availableTabs = if (effectiveCurrentSpace.type == SpaceType.TEAM) {
+            TeamSpaceTabs
+        } else {
+            PersonalSpaceTabs
+        }
+        if (selectedTab !in availableTabs) {
+            selectedTab = availableTabs.first()
+        }
+    }
 
     Scaffold(
         topBar = {
             SpaceAwareTopAppBar(
-                spaceType = currentSpace.type,
-                spaceName = currentSpace.name,
-                currentSpace = currentSpace,
-                spaces = spaces,
+                spaceType = effectiveCurrentSpace.type,
+                spaceName = effectiveCurrentSpace.name,
+                currentSpace = effectiveCurrentSpace,
+                spaces = effectiveSpaces,
                 onSpaceSelected = { space ->
-                    if (space.id != currentSpace.id) {
+                    if (space.id != effectiveCurrentSpace.id) {
                         isSpaceTransitioning = true
-                        currentSpace = space
+                        onSpaceSelected(space)
                         selectedTab = if (space.type == SpaceType.TEAM) BottomNavTab.PROJECT
                                       else BottomNavTab.HOME
                     }
                 },
-                onCreateTeamSpace = { },
-                onJoinTeam = { },
-                onSearchClick = { },
-                onNotificationClick = { },
-                onProfileClick = { },
-                unreadNotificationCount = 3
+                onCreateTeamSpace = onNavigateToCreateTeam,
+                onJoinTeam = onNavigateToJoinTeam,
+                onSearchClick = onNavigateToSearch,
+                onNotificationClick = onNavigateToNotifications,
+                onProfileClick = onNavigateToSettings,
+                unreadNotificationCount = unreadNotificationCount,
+                userAvatarUrl = userAvatarUrl
             )
         },
         bottomBar = {
             SpaceAwareBottomNavBar(
-                spaceType = currentSpace.type,
+                spaceType = effectiveCurrentSpace.type,
                 selectedTab = selectedTab,
                 onTabSelected = { selectedTab = it }
             )
         },
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            AnimatedContent(
-                targetState = selectedTab,
-                transitionSpec = {
-                    (fadeIn(tween(250)) + slideInHorizontally(tween(250)) { it / 4 })
-                        .togetherWith(fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { -it / 4 })
-                },
-                label = "tabContent"
-            ) { tab ->
-                ContentForTab(tab, onNavigateToNoteEdit, onNavigateToTaskCreate, onNavigateToTodoCreate)
-            }
-
-            AnimatedVisibility(
-                visible = isSpaceTransitioning,
-                enter = fadeIn(tween(300)),
-                exit = fadeOut(tween(300))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .widthIn(max = maxContentWidth)
             ) {
-                SpaceTransitionOverlay(currentSpace.name)
+                if (hasRealSpace) {
+                    AnimatedContent(
+                        targetState = selectedTab,
+                        transitionSpec = {
+                            (fadeIn(tween(250)) + slideInHorizontally(tween(250)) { it / 4 })
+                                .togetherWith(fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { -it / 4 })
+                        },
+                        label = "tabContent"
+                    ) { tab ->
+                        ContentForTab(
+                            tab = tab,
+                            spaceId = effectiveCurrentSpace.id,
+                            onNavigateToNoteEdit = onNavigateToNoteEdit,
+                            onNavigateToProject = onNavigateToProject,
+                            onNavigateToTaskDetail = onNavigateToTaskDetail,
+                            onNavigateToFilePreview = onNavigateToFilePreview,
+                            onNavigateToTaskCreate = onNavigateToTaskCreate,
+                            onNavigateToTodoCreate = onNavigateToTodoCreate,
+                            isTeamSpace = effectiveCurrentSpace.type == SpaceType.TEAM,
+                            onOpenNoteList = { selectedTab = BottomNavTab.NOTE },
+                            onOpenTodoList = { selectedTab = BottomNavTab.TODO },
+                        )
+                    }
+                } else {
+                    NoSpaceContent(
+                        modifier = Modifier.fillMaxSize(),
+                        onCreateTeam = onNavigateToCreateTeam,
+                        onJoinTeam = onNavigateToJoinTeam
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = isSpaceTransitioning,
+                    enter = fadeIn(tween(300)),
+                    exit = fadeOut(tween(300))
+                ) {
+                    SpaceTransitionOverlay(effectiveCurrentSpace.name)
+                }
             }
         }
     }
@@ -157,207 +222,614 @@ fun HomeRoute(
 @Composable
 private fun ContentForTab(
     tab: BottomNavTab,
-    onNavigateToNoteEdit: () -> Unit,
+    spaceId: Long,
+    onNavigateToNoteEdit: (Long?) -> Unit,
+    onNavigateToProject: (Long) -> Unit,
+    onNavigateToTaskDetail: (Long) -> Unit,
+    onNavigateToFilePreview: (Long) -> Unit,
     onNavigateToTaskCreate: () -> Unit,
-    onNavigateToTodoCreate: () -> Unit
+    onNavigateToTodoCreate: () -> Unit,
+    isTeamSpace: Boolean,
+    onOpenNoteList: () -> Unit,
+    onOpenTodoList: () -> Unit
 ) {
     when (tab) {
-        BottomNavTab.HOME -> PersonalHomeContent()
-        BottomNavTab.PROJECT -> TeamProjectWorkbench()
-        BottomNavTab.NOTE -> NoteListRoute(Modifier.fillMaxSize(), onCreateNote = onNavigateToNoteEdit)
-        BottomNavTab.DOCUMENT -> NoteListRoute(Modifier.fillMaxSize(), onCreateNote = onNavigateToNoteEdit)
-        BottomNavTab.TASK -> TaskListRoute(Modifier.fillMaxSize(), onCreateTask = onNavigateToTaskCreate)
-        BottomNavTab.TODO -> TodoListRoute(Modifier.fillMaxSize(), onCreateTodo = onNavigateToTodoCreate)
-        BottomNavTab.FILE -> FileBrowserRoute(Modifier.fillMaxSize())
-        BottomNavTab.STATS -> StatsRoute(Modifier.fillMaxSize())
-        BottomNavTab.MEMBERS -> TeamMembersContent()
+        BottomNavTab.HOME -> PersonalHomeContent(
+            spaceId = spaceId,
+            onCreateNote = { onNavigateToNoteEdit(null) },
+            onOpenNote = { onNavigateToNoteEdit(it) },
+            onOpenNoteList = onOpenNoteList,
+            onOpenTodoList = onOpenTodoList
+        )
+        BottomNavTab.PROJECT -> ProjectRoute(
+            modifier = Modifier.fillMaxSize(),
+            spaceId = spaceId,
+            onProjectClick = onNavigateToProject
+        )
+        BottomNavTab.NOTE -> NoteListRoute(
+            modifier = Modifier.fillMaxSize(),
+            spaceId = spaceId,
+            onNoteClick = { onNavigateToNoteEdit(it) },
+            onCreateNote = { onNavigateToNoteEdit(null) }
+        )
+        BottomNavTab.DOCUMENT -> NoteListRoute(
+            modifier = Modifier.fillMaxSize(),
+            spaceId = spaceId,
+            title = "文档",
+            subtitle = "团队知识与协作资料",
+            onNoteClick = { onNavigateToNoteEdit(it) },
+            onCreateNote = { onNavigateToNoteEdit(null) }
+        )
+        BottomNavTab.TASK -> TaskListRoute(
+            modifier = Modifier.fillMaxSize(),
+            spaceId = spaceId,
+            onTaskClick = onNavigateToTaskDetail,
+            onCreateTask = onNavigateToTaskCreate
+        )
+        BottomNavTab.TODO -> TodoListRoute(Modifier.fillMaxSize(), spaceId = spaceId, onCreateTodo = onNavigateToTodoCreate)
+        BottomNavTab.FILE -> FileBrowserRoute(
+            spaceId = spaceId,
+            modifier = Modifier.fillMaxSize(),
+            onFileClick = onNavigateToFilePreview
+        )
+        BottomNavTab.STATS -> StatsRoute(
+            modifier = Modifier.fillMaxSize(),
+            spaceId = spaceId,
+            isTeamSpace = isTeamSpace
+        )
+        BottomNavTab.MEMBERS -> MembersRoute(Modifier.fillMaxSize(), spaceId = spaceId)
     }
 }
 
-// ============================================================
-// 个人空间首页 — 匹配 home_screen_personal_space_english_nav
-// ============================================================
 @Composable
-private fun PersonalHomeContent() {
+private fun NoSpaceContent(
+    modifier: Modifier = Modifier,
+    onCreateTeam: () -> Unit,
+    onJoinTeam: () -> Unit
+) {
+    Box(
+        modifier = modifier.padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "当前还没有可用空间",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "先创建团队空间，或通过邀请码加入现有团队。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onCreateTeam,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("新建团队")
+                    }
+                    TextButton(
+                        onClick = onJoinTeam,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("加入团队")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonalHomeContent(
+    spaceId: Long,
+    onCreateNote: () -> Unit,
+    onOpenNote: (Long) -> Unit,
+    onOpenNoteList: () -> Unit,
+    onOpenTodoList: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val contentState = uiState as? PersonalHomeUiState.Content
+
+    LaunchedEffect(spaceId) {
+        viewModel.load(spaceId)
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 问候语（图片在上方，文字在下）
         item {
             Spacer(Modifier.height(8.dp))
-            // 顶部大图
             Box(
-                modifier = Modifier.fillMaxWidth().height(200.dp)
-                    .clip(RoundedCornerShape(28.dp))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(184.dp)
+                    .clip(RoundedCornerShape(20.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Image(
-                    painter = painterResource(com.notaskflow.core.R.drawable.personal_home),
+                    painter = painterResource(R.drawable.personal_home),
                     contentDescription = "首页封面",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
             Spacer(Modifier.height(20.dp))
-            Text("Good morning, Alex.",
-                style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
-            Text("准备好开始新的一天了吗？",
-                style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontStyle = FontStyle.Italic, modifier = Modifier.padding(top = 4.dp))
-            Spacer(Modifier.height(28.dp))
+            Text(
+                text = "今天也从最重要的一件事开始。",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "最近笔记和未完成待办会在这里汇总。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
 
-        // 快捷操作卡片
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(
-                    Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(24.dp)).clickable { },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                QuickActionCard(
+                    title = "写笔记",
+                    subtitle = "记录灵感",
+                    icon = Icons.Filled.Edit,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                    onClick = onCreateNote
+                )
+                QuickActionCard(
+                    title = "待办事项",
+                    subtitle = "${contentState?.pendingTodoTotal ?: 0} 项未完成",
+                    icon = Icons.Filled.CheckCircle,
+                    iconTint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenTodoList
+                )
+            }
+        }
+
+        item {
+            PersonalNoteTrendCard(
+                trends = contentState?.personalNoteTrends.orEmpty(),
+                isLoading = uiState is PersonalHomeUiState.Loading
+            )
+        }
+
+        if (uiState is PersonalHomeUiState.Loading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Filled.Edit, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
-                        }
-                        Column {
-                            Text("写笔记", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("记录灵感", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-                Card(
-                    Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(24.dp)).clickable { },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                ) {
-                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Filled.CheckCircle, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.tertiary)
-                        }
-                        Column {
-                            Text("待办事项", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("今日 3 项", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
+                    CircularProgressIndicator()
                 }
             }
-            Spacer(Modifier.height(28.dp))
         }
 
-        // 温柔提醒
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("温柔提醒", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        contentState?.errorMessage?.let { message ->
+            item {
+                EmptyStateCard(
+                    title = "同步遇到问题",
+                    subtitle = message
+                )
             }
-            Spacer(Modifier.height(8.dp))
-        }
-
-        item {
-            Card(
-                Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f))
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("🌸", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("给自己一个深呼吸", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text("忙碌中别忘了停下来，喝杯热茶，看看窗外。你已经做得很好了。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-            Spacer(Modifier.height(24.dp))
-        }
-
-        // 最近笔记标题
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("最近笔记", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                TextButton(onClick = { }) { Text("查看全部", color = MaterialTheme.colorScheme.primary) }
-            }
-            Spacer(Modifier.height(8.dp))
-        }
-
-        // 最近笔记卡片（Card 样式）
-        item {
-            Card(
-                Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Journal · Oct 24", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    Text("秋天午后的宁静力量", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(6.dp))
-                    Text("午后的阳光洒在地板上，温柔而安详。今天突然意识到...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Spacer(Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TagChip("#觉知"); TagChip("#秋天")
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
         }
 
         item {
-            Card(
-                Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.CheckCircle, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("完成 《设计师之路》", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text("晨间笔记: 第12/30天", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.height(8.dp))
-                        LinearProgressIndicator(progress = { 0.4f }, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.surfaceVariant)
-                    }
-                }
-            }
-            Spacer(Modifier.height(24.dp))
+            SectionHeader(title = "最近笔记", actionText = "查看全部", onActionClick = onOpenNoteList)
         }
 
-        // 本周观察
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("本周观察", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        if (contentState?.recentNotes.isNullOrEmpty() && uiState !is PersonalHomeUiState.Loading) {
+            item {
+                EmptyStateCard(
+                    title = "暂无最近笔记",
+                    subtitle = "写下第一条内容后会出现在这里"
+                )
             }
-            Spacer(Modifier.height(8.dp))
+        } else {
+            items(contentState?.recentNotes.orEmpty().take(3), key = { note -> "home-note-${note.id}" }) { note ->
+                PersonalNoteCard(note = note, onClick = { onOpenNote(note.id) })
+            }
         }
 
         item {
-            Card(
-                Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("📊", style = MaterialTheme.typography.titleLarge)
-                        Spacer(Modifier.width(10.dp))
-                        Column {
-                            Text("笔记 128 篇 · 本周新增 5 篇", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                            Text("任务完成率 72%，比上周提升 8%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
+            SectionHeader(title = "未完成待办", actionText = "查看全部", onActionClick = onOpenTodoList)
+        }
+
+        if (contentState?.pendingTodos.isNullOrEmpty() && uiState !is PersonalHomeUiState.Loading) {
+            item {
+                EmptyStateCard(
+                    title = "待办已清空",
+                    subtitle = "当前空间没有未完成事项"
+                )
             }
+        } else {
+            items(contentState?.pendingTodos.orEmpty().take(3), key = { todo -> "home-todo-${todo.id}" }) { todo ->
+                PersonalTodoCard(todo = todo)
+            }
+        }
+
+        item {
             Spacer(Modifier.height(80.dp))
+        }
+    }
+}
+
+@Composable
+private fun PersonalNoteTrendCard(
+    trends: List<PersonalNoteTrend>,
+    isLoading: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "最近 7 日笔记趋势",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (trends.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        TrendLegend(
+                            color = MaterialTheme.colorScheme.primary,
+                            label = "新建"
+                        )
+                        TrendLegend(
+                            color = MaterialTheme.colorScheme.tertiary,
+                            label = "更新"
+                        )
+                    }
+                }
+            }
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(122.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                trends.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(122.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "暂无统计数据",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                else -> {
+                    val visibleTrends = trends.takeLast(7)
+                    val maxCount = visibleTrends.maxOf { trend ->
+                        maxOf(trend.createdCount, trend.updatedCount)
+                    }.coerceAtLeast(1L)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(156.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        visibleTrends.forEach { trend ->
+                            HomeTrendBarGroup(
+                                trend = trend,
+                                maxCount = maxCount,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeTrendBarGroup(
+    trend: PersonalNoteTrend,
+    maxCount: Long,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.height(112.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            HomeTrendBar(
+                count = trend.createdCount,
+                maxCount = maxCount,
+                color = MaterialTheme.colorScheme.primary
+            )
+            HomeTrendBar(
+                count = trend.updatedCount,
+                maxCount = maxCount,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = trend.date.shortTrendDate(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+        Text(
+            text = "${trend.createdCount + trend.updatedCount}",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun HomeTrendBar(
+    count: Long,
+    maxCount: Long,
+    color: Color
+) {
+    val ratio = (count.toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
+    val height = if (count == 0L) 4.dp else (104.dp * ratio).coerceAtLeast(8.dp)
+    Box(
+        modifier = Modifier
+            .width(8.dp)
+            .height(height)
+            .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp, bottomStart = 3.dp, bottomEnd = 3.dp))
+            .background(if (count == 0L) MaterialTheme.colorScheme.outlineVariant else color)
+    )
+}
+
+@Composable
+private fun TrendLegend(
+    color: Color,
+    label: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private fun String.shortTrendDate(): String {
+    return if (length >= 5) {
+        takeLast(5)
+    } else {
+        this
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(108.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(iconTint.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = iconTint)
+            }
+            Column {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String, actionText: String, onActionClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        TextButton(onClick = onActionClick) {
+            Text(actionText, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun PersonalNoteCard(note: Note, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = formatDateTimeText(note.gmtModified).ifBlank { "未记录更新时间" },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                note.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            note.content?.takeIf { it.isNotBlank() }?.let { content ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (note.tags.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    note.tags.take(3).forEach { tag -> TagChip("#${tag.name}") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonalTodoCard(todo: Todo) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    todo.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                todo.deadline?.let { deadline ->
+                    Text(
+                        "截止 ${formatDateTimeText(deadline)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateCard(title: String, subtitle: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }
@@ -373,140 +845,6 @@ private fun TagChip(text: String) {
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     )
-}
-
-// ============================================================
-// 团队空间首页（项目工作台）
-// ============================================================
-@Composable
-private fun TeamProjectWorkbench() {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text(
-                text = "项目工作台",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "产品开发团队 · 12 人",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // 快速操作
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickActionCard("新建项目", Icons.Filled.Add, Modifier.weight(1f))
-                QuickActionCard("新建文档", Icons.Filled.Edit, Modifier.weight(1f))
-                QuickActionCard("新建任务", Icons.Filled.CheckCircle, Modifier.weight(1f))
-            }
-        }
-
-        // 我的项目
-        item {
-            Text(
-                text = "我的项目",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        items(3) { i ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SunriseColors.primary)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "项目 ${i + 1}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "${(i + 1) * 8} 任务 · ${(i + 1) * 3} 已完成",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        Icons.Filled.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(80.dp)) }
-    }
-}
-
-@Composable
-private fun QuickActionCard(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        onClick = { }
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium)
-        }
-    }
-}
-
-// ============================================================
-// 团队成员
-// ============================================================
-@Composable
-private fun TeamMembersContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "团队成员",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "成员管理功能将在后续版本中实现",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
 }
 
 // ============================================================
@@ -531,3 +869,7 @@ private fun SpaceTransitionOverlay(spaceName: String) {
         }
     }
 }
+
+private val PERSONAL_MAX_CONTENT_WIDTH = 840.dp
+private val TEAM_MAX_CONTENT_WIDTH = 1180.dp
+private const val EMPTY_SPACE_ID = -1L

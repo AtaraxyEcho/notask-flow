@@ -1,8 +1,6 @@
 package com.notaskflow.core.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,19 +10,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,7 +33,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notaskflow.core.model.SpaceType
-import com.notaskflow.core.ui.theme.AppShapes
 import com.notaskflow.core.ui.theme.TeamColors
 import com.notaskflow.core.ui.theme.SunriseColors
 
@@ -73,53 +71,69 @@ fun SpaceSwitcher(
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // 胶囊按钮颜色随空间类型变化
     val borderColor = when (currentSpace.type) {
-        SpaceType.PERSONAL -> SunriseColors.primaryContainer
-        SpaceType.TEAM -> TeamColors.primaryContainer
-        else -> SunriseColors.primaryContainer
+        SpaceType.PERSONAL -> MaterialTheme.colorScheme.outlineVariant
+        SpaceType.TEAM -> TeamColors.outlineVariant
+    }
+    val containerColor = when (currentSpace.type) {
+        SpaceType.PERSONAL -> MaterialTheme.colorScheme.surfaceContainer
+        SpaceType.TEAM -> TeamColors.surfaceContainerLow
+    }
+    val contentColor = when (currentSpace.type) {
+        SpaceType.PERSONAL -> MaterialTheme.colorScheme.primary
+        SpaceType.TEAM -> TeamColors.primary
     }
 
-    Row(
+    Surface(
+        onClick = { showSheet = true },
         modifier = modifier
-            .height(40.dp)
-            .clip(AppShapes.SpaceSwitcherShape)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable { showSheet = true }
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+            .height(32.dp)
+            .widthIn(min = 64.dp, max = 88.dp),
+        shape = RoundedCornerShape(17.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, borderColor.copy(alpha = 0.72f))
     ) {
-        Icon(
-            imageVector = if (currentSpace.type == SpaceType.PERSONAL)
-                Icons.Filled.Person else Icons.Filled.Groups,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = currentSpace.name,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Filled.KeyboardArrowDown,
-            contentDescription = "展开空间列表",
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (currentSpace.type == SpaceType.PERSONAL)
+                    Icons.Filled.Person else Icons.Filled.Groups,
+                contentDescription = null,
+                modifier = Modifier.size(13.dp),
+                tint = contentColor
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = currentSpace.name,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = "展开空间列表",
+                modifier = Modifier.size(13.dp),
+                tint = contentColor
+            )
+        }
     }
 
-    // BottomSheet 面板
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (currentSpace.type == SpaceType.TEAM) {
+                TeamColors.surface
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -129,26 +143,32 @@ fun SpaceSwitcher(
             ) {
                 Text(
                     text = "切换空间",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 个人空间
                 val personalSpaces = spaces.filter { it.type == SpaceType.PERSONAL }
-                personalSpaces.forEach { space ->
-                    SpaceListItem(
-                        space = space,
-                        isSelected = space.id == currentSpace.id,
-                        onClick = {
-                            onSpaceSelected(space)
-                            showSheet = false
-                        }
+                if (personalSpaces.isNotEmpty()) {
+                    Text(
+                        text = "个人空间",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
+                    personalSpaces.forEach { space ->
+                        SpaceListItem(
+                            space = space,
+                            isSelected = space.id == currentSpace.id,
+                            onClick = {
+                                onSpaceSelected(space)
+                                showSheet = false
+                            }
+                        )
+                    }
                 }
 
-                // 团队空间
                 val teamSpaces = spaces.filter { it.type == SpaceType.TEAM }
                 if (teamSpaces.isNotEmpty()) {
                     HorizontalDivider(
@@ -161,8 +181,8 @@ fun SpaceSwitcher(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    LazyColumn {
-                        items(teamSpaces) { space ->
+                    LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                        items(teamSpaces, key = { space -> space.id }) { space ->
                             SpaceListItem(
                                 space = space,
                                 isSelected = space.id == currentSpace.id,
@@ -177,31 +197,36 @@ fun SpaceSwitcher(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 底部操作按钮
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    TextButton(
+                    OutlinedButton(
                         onClick = {
                             onCreateTeamSpace()
                             showSheet = false
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, TeamColors.outlineVariant)
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("新建团队")
                     }
                     OutlinedButton(
                         onClick = {
-                            onJoinTeam()
-                            showSheet = false
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("加入团队")
-                    }
+                        onJoinTeam()
+                        showSheet = false
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, TeamColors.outlineVariant)
+                ) {
+                    Icon(Icons.Filled.Groups, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("加入团队")
+                }
                 }
             }
         }
@@ -214,18 +239,33 @@ private fun SpaceListItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant
-                  else MaterialTheme.colorScheme.surface
-    val textColor = if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface
+    val bgColor = if (isSelected) {
+        when (space.type) {
+            SpaceType.TEAM -> TeamColors.primaryFixed
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        }
+    } else {
+        when (space.type) {
+            SpaceType.TEAM -> TeamColors.surfaceContainerLow
+            else -> MaterialTheme.colorScheme.surface
+        }
+    }
+    val textColor = if (isSelected) {
+        when (space.type) {
+            SpaceType.TEAM -> TeamColors.primary
+            else -> MaterialTheme.colorScheme.primary
+        }
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(14.dp))
             .background(bgColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -238,15 +278,17 @@ private fun SpaceListItem(
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = space.name,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = textColor,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
         if (space.type == SpaceType.TEAM) {
             Text(
                 text = "${space.memberCount}人",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -265,7 +307,10 @@ private fun SpaceListItem(
                 imageVector = Icons.Filled.Check,
                 contentDescription = "当前空间",
                 modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = when (space.type) {
+                    SpaceType.TEAM -> TeamColors.primary
+                    SpaceType.PERSONAL -> MaterialTheme.colorScheme.primary
+                }
             )
         }
     }

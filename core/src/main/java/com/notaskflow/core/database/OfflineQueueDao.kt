@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OfflineQueueDao {
-    @Query("SELECT * FROM offline_queue WHERE status = :status ORDER BY createdAt ASC")
+    @Query("SELECT * FROM offline_queue WHERE status = :status ORDER BY created_at ASC")
     fun observeByStatus(status: String): Flow<List<OfflineQueueEntry>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

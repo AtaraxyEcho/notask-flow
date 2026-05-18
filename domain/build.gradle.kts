@@ -12,5 +12,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation(libs.coroutines.core)
+    implementation(libs.javax.inject)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }

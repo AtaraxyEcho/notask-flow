@@ -1,6 +1,5 @@
 package com.notaskflow.feature.todo
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -24,25 +23,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,39 +49,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.notaskflow.core.common.formatDateTimeText
+import com.notaskflow.domain.model.Todo
+import com.notaskflow.feature.common.DateTimePickerField
+import com.notaskflow.feature.common.NotaskFilledTextField
+import com.notaskflow.feature.common.SwipeDeleteContainer
 
-data class TodoItem(
-    val id: Long, val title: String, val isCompleted: Boolean = false,
-    val deadline: String = "", val isOverdue: Boolean = false,
-    val category: String? = null
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoListRoute(
     modifier: Modifier = Modifier,
-    onCreateTodo: () -> Unit = {}
+    spaceId: Long? = null,
+    onCreateTodo: () -> Unit = {},
+    viewModel: TodoListViewModel = hiltViewModel()
 ) {
-    var selectedFilter by remember { mutableStateOf("All") }
-    var searchQuery by remember { mutableStateOf("") }
-    val filters = listOf("All", "Today", "Upcoming", "Overdue")
-
-    val todos = remember {
-        listOf(
-            TodoItem(1, "Update the annual gratitude journal entries", false, "Overdue: Oct 24", true),
-            TodoItem(2, "Water the monstera and fiddle leaf fig", false, "Today, 4:00 PM"),
-            TodoItem(3, "Morning meditation and tea", true, "Completed"),
-            TodoItem(4, "Book weekend pottery class", false, "Tomorrow"),
-            TodoItem(5, "Read 20 pages of Newsreader philosophy", false, "Today", category = "Self-Care"),
-            TodoItem(6, "Plan weekly meal prep for the family", false, "Oct 28")
-        )
+    val uiState by viewModel.uiState.collectAsState()
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var editingTodo by remember { mutableStateOf<Todo?>(null) }
+    var pendingDeleteTodo by remember { mutableStateOf<Todo?>(null) }
+    var newTodoTitle by remember { mutableStateOf("") }
+    var todoDeadline by remember { mutableStateOf("") }
+    LaunchedEffect(spaceId) {
+        if (spaceId != null) {
+            viewModel.load(spaceId)
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -91,23 +84,36 @@ fun TodoListRoute(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // 问候语
             item {
-                Text("Good morning, Alex.",
-                    style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
-                Text("What's on your heart today?",
-                    style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontStyle = FontStyle.Italic)
-                Spacer(Modifier.height(24.dp))
+                Text(
+                    text = "待办",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "整理今天需要推进的小事",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(20.dp))
             }
 
-            // 搜索栏
             item {
                 OutlinedTextField(
-                    value = searchQuery, onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    placeholder = { Text("Search your todos...") },
-                    leadingIcon = { Icon(Icons.Filled.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    value = uiState.searchQuery,
+                    onValueChange = viewModel::updateSearchQuery,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    placeholder = { Text("搜索待办") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     shape = RoundedCornerShape(24.dp),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -117,148 +123,317 @@ fun TodoListRoute(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
                     )
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
             }
 
-            // 筛选芯片
             item {
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    filters.forEach { f ->
-                        val sel = selectedFilter == f
-                        Box(Modifier.clip(RoundedCornerShape(50))
-                            .background(if (sel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .clickable { selectedFilter = f }.padding(horizontal = 20.dp, vertical = 10.dp)
-                        ) {
-                            Text(f, style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal,
-                                color = if (sel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(20.dp))
-            }
-
-            // 灵感图片卡片
-            item {
-                Card(
-                    Modifier.fillMaxWidth().height(180.dp),
-                    shape = RoundedCornerShape(24.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(Modifier.fillMaxSize()) {
-                        Image(
-                            painter = painterResource(com.notaskflow.core.R.drawable.personal_todo),
-                            contentDescription = "Inspiration",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                    TodoFilter.entries.forEach { filter ->
+                        FilterPill(
+                            text = filter.label,
+                            selected = uiState.selectedFilter == filter,
+                            onClick = { viewModel.selectFilter(filter) }
                         )
-                        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0x99000000)).padding(20.dp), contentAlignment = Alignment.BottomStart) {
-                            Column {
-                                Text("Inspiration", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
-                                Spacer(Modifier.height(4.dp))
-                                Text("\"The secret of getting ahead is getting started.\"",
-                                    style = MaterialTheme.typography.titleMedium, color = androidx.compose.ui.graphics.Color.White)
-                            }
-                        }
                     }
                 }
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
             }
 
-            // 待办卡片
-            items(todos) { todo ->
-                TodoBentoCard(todo)
-                Spacer(Modifier.height(12.dp))
+            if (spaceId == null) {
+                item { StateText("请先选择空间") }
+            } else if (uiState.isLoading && uiState.todos.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (uiState.errorMessage != null && uiState.todos.isEmpty()) {
+                item { StateText(uiState.errorMessage ?: "加载失败") }
+            } else if (uiState.todos.isEmpty()) {
+                item { StateText("暂无待办") }
+            } else {
+                items(uiState.todos, key = { todo -> "todo-${todo.id}" }) { todo ->
+                    SwipeDeleteContainer(
+                        onDeleteRequest = { pendingDeleteTodo = todo },
+                        cornerRadius = 20.dp
+                    ) {
+                        TodoCard(
+                            todo = todo,
+                            onToggleComplete = { viewModel.toggleComplete(todo) },
+                            onEdit = {
+                                editingTodo = todo
+                                newTodoTitle = todo.title
+                                todoDeadline = todo.deadline.orEmpty()
+                            }
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
             }
 
             item { Spacer(Modifier.height(80.dp)) }
         }
 
         FloatingActionButton(
-            onClick = onCreateTodo,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            onClick = {
+                if (spaceId == null) {
+                    onCreateTodo()
+                } else {
+                    showCreateDialog = true
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(Icons.Filled.Add, "新建待办", tint = MaterialTheme.colorScheme.onPrimary)
         }
     }
+
+    if (showCreateDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            title = { Text("新建待办") },
+            text = {
+                TodoEditFields(
+                    title = newTodoTitle,
+                    deadline = todoDeadline,
+                    onTitleChange = { newTodoTitle = it },
+                    onDeadlineChange = { todoDeadline = it }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.create(newTodoTitle, todoDeadline)
+                        newTodoTitle = ""
+                        todoDeadline = ""
+                        showCreateDialog = false
+                    }
+                ) {
+                    Text("保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    editingTodo?.let { todo ->
+        AlertDialog(
+            onDismissRequest = { editingTodo = null },
+            title = { Text("编辑待办") },
+            text = {
+                TodoEditFields(
+                    title = newTodoTitle,
+                    deadline = todoDeadline,
+                    onTitleChange = { newTodoTitle = it },
+                    onDeadlineChange = { todoDeadline = it }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.update(todo, newTodoTitle, todoDeadline)
+                        newTodoTitle = ""
+                        todoDeadline = ""
+                        editingTodo = null
+                    }
+                ) {
+                    Text("保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingTodo = null }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    pendingDeleteTodo?.let { todo ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteTodo = null },
+            title = { Text("删除待办") },
+            text = { Text("确定删除“${todo.title}”吗？") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.delete(todo)
+                        pendingDeleteTodo = null
+                    }
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteTodo = null }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun TodoBentoCard(todo: TodoItem) {
-    // 逾期项特殊样式
-    val borderMod = if (todo.isOverdue) Modifier.background(MaterialTheme.colorScheme.error.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
-                    else Modifier
+private fun FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceContainerHigh
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 9.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
+@Composable
+private fun TodoCard(
+    todo: Todo,
+    onToggleComplete: () -> Unit,
+    onEdit: () -> Unit
+) {
     Card(
-        Modifier.fillMaxWidth().then(borderMod),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.Top) {
-            // 复选框
-            val borderColor = when {
-                todo.isOverdue -> MaterialTheme.colorScheme.error
-                todo.isCompleted -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.primary
-            }
+        Row(
+            modifier = Modifier.padding(18.dp),
+            verticalAlignment = Alignment.Top
+        ) {
             Box(
-                Modifier.size(24.dp).clip(CircleShape).background(
-                    if (todo.isCompleted) MaterialTheme.colorScheme.primary else Color.Transparent
-                ),
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (todo.isCompleted) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                    )
+                    .clickable(onClick = onToggleComplete),
                 contentAlignment = Alignment.Center
             ) {
                 if (todo.isCompleted) {
-                    Icon(Icons.Filled.Done, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(
+                        Icons.Filled.Done,
+                        contentDescription = "标记未完成",
+                        modifier = Modifier.size(17.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
                 } else {
-                    // 空心圆 — 绘制边框
-                    Box(Modifier.size(24.dp).clip(CircleShape).background(Color.Transparent))
-                    androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
-                        drawCircle(color = borderColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()))
-                    }
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = "标记完成",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(14.dp))
 
-            Column(Modifier.weight(1f)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    todo.category?.let { cat ->
-                        Box(Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)).padding(horizontal = 12.dp, vertical = 3.dp)) {
-                            Text(cat, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                    Icon(Icons.Filled.MoreVert, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-
-                Spacer(Modifier.height(8.dp))
-                Text(todo.title, style = MaterialTheme.typography.bodyLarge,
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = todo.title,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (todo.isCompleted) FontWeight.Normal else FontWeight.Medium,
                     textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (todo.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
-
-                if (todo.deadline.isNotEmpty()) {
-                    Spacer(Modifier.height(6.dp))
+                    color = if (todo.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                todo.deadline?.let { deadline ->
+                    Spacer(Modifier.height(7.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val icon = when {
-                            todo.isOverdue -> Icons.Filled.EventBusy
-                            todo.isCompleted -> Icons.Filled.Done
-                            else -> Icons.Filled.CalendarToday
-                        }
-                        val color = when {
-                            todo.isOverdue -> MaterialTheme.colorScheme.error
-                            todo.isCompleted -> MaterialTheme.colorScheme.onSurfaceVariant
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                        Icon(icon, null, Modifier.size(14.dp), tint = color)
-                        Spacer(Modifier.width(4.dp))
-                        Text(todo.deadline, style = MaterialTheme.typography.labelSmall, color = color)
+                        Icon(
+                            Icons.Filled.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            text = formatDateTimeText(deadline),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
+
+            TextButton(onClick = onEdit) {
+                Text("编辑")
+            }
         }
+    }
+}
+
+@Composable
+private fun TodoEditFields(
+    title: String,
+    deadline: String,
+    onTitleChange: (String) -> Unit,
+    onDeadlineChange: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        NotaskFilledTextField(
+            value = title,
+            onValueChange = onTitleChange,
+            label = "标题",
+            placeholder = "写下待办事项",
+            singleLine = true
+        )
+        DateTimePickerField(
+            value = deadline,
+            onValueChange = onDeadlineChange,
+            label = "截止时间",
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = "可选"
+        )
+    }
+}
+
+@Composable
+private fun StateText(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

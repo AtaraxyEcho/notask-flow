@@ -5,14 +5,14 @@ Notask Flow Android 原生客户端骨架，基于 Kotlin、Jetpack Compose、Hi
 ## 模块
 
 - `app`：应用入口、Hilt Application、根导航壳。
-- `core/*`：通用能力、领域模型、网络、数据库、DataStore、UI 设计系统与测试工具。
+- `core`：通用能力、网络基础、数据库、DataStore、UI 设计系统与测试工具。
 - `data`：API、DTO、Repository 实现与 DI。
-- `domain`：Repository 契约与 UseCase。
-- `feature/*`：按业务屏幕拆分的 Compose 功能模块。
+- `domain`：领域模型、Repository 契约与 UseCase，尽量保持纯 Kotlin。
+- `feature`：按业务包组织的 Compose 页面、ViewModel 与导航入口。
 
 ## 构建
 
 ```powershell
 cd android
-gradle :app:assembleDebug
+.\gradlew.bat :app:assembleDebug
 ```
