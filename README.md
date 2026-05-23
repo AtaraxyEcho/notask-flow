@@ -17,6 +17,90 @@ Notask Flow Android 原生客户端，基于 Kotlin、Jetpack Compose、Hilt、R
 | 协作文档 | Android WebView + `app/src/main/assets/notask_collab/editor.js` |
 | 构建 | Gradle Kotlin DSL、Version Catalog |
 
+## 功能图
+
+截图不放入 Markdown 表格，避免图片按原始尺寸撑开页面。手机竖屏截图建议使用 `width="260"`，横向原型图或组合图建议使用 `width="420"`。
+
+### 登录注册
+
+<p align="center">
+  <img src="./img/登录.jpg" width="260" alt="登录注册" />
+</p>
+
+展示账号登录、注册和认证入口。
+
+### 空间切换与首页
+
+<p align="center">
+  <img src="./img/首页.jpg" width="260" alt="空间切换与首页" />
+</p>
+
+展示个人空间、团队空间切换和首页信息流。
+
+### 笔记与协作文档
+
+<p align="center">
+  <img src="./img/笔记编辑.jpg" width="260" alt="笔记与协作文档" />
+</p>
+
+展示笔记列表、笔记详情、编辑和协作文档入口。
+
+### 待办
+
+<p align="center">
+  <img src="./img/待办.jpg" width="260" alt="待办" />
+</p>
+
+展示待办列表、筛选、创建和完成状态。
+
+### 任务
+
+<p align="center">
+  <img src="./img/任务.jpg" width="260" alt="任务" />
+</p>
+
+展示个人任务、团队任务和任务详情。
+
+### 项目
+
+<p align="center">
+  <img src="./img/项目.jpg" width="260" alt="项目" />
+</p>
+
+展示团队项目列表、项目详情和项目成员信息。
+
+### 文件
+
+<p align="center">
+  <img src="./img/文件.jpg" width="260" alt="文件" />
+</p>
+
+展示空间文件列表、文件预览和附件访问。
+
+### 搜索
+
+<p align="center">
+  <img src="./img/全局搜索.jpg" width="260" alt="搜索" />
+</p>
+
+展示全局搜索和结果筛选。
+
+### 通知
+
+<p align="center">
+  <img src="./img/站内通知.jpg" width="260" alt="通知" />
+</p>
+
+展示站内通知、任务提醒和协作消息。
+
+### 设置
+
+<p align="center">
+  <img src="./img/个人设置.jpg" width="260" alt="设置" />
+</p>
+
+展示个人资料、账户安全、主题和偏好设置。
+
 ## 模块结构
 
 ```text
