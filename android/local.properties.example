@@ -1,0 +1,6 @@
+# Android SDK path template.
+# Android Studio usually creates local.properties automatically.
+# Copy to local.properties only when a fresh CLI environment needs it.
+# The real local.properties is ignored by Git.
+
+sdk.dir=D\:\\Development\\Android_SDK
