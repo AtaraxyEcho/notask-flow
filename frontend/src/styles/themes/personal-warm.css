@@ -1,0 +1,51 @@
+/* Warm/Sunny Personal Space Theme - Default */
+:root,
+[data-theme="warm"] {
+  --on-primary-container: #752305;
+  --on-secondary-fixed: #1b1c1b;
+  --on-secondary-container: #636262;
+  --tertiary-container: #aaaaaa;
+  --surface-tint: #9f4122;
+  --on-primary-fixed-variant: #7f2a0d;
+  --on-secondary-fixed-variant: #474746;
+  --on-error-container: #93000a;
+  --on-surface: #1e1b19;
+  --on-secondary: #ffffff;
+  --tertiary-fixed-dim: #c6c6c6;
+  --primary-fixed: #ffdbd0;
+  --tertiary: #5d5f5f;
+  --surface-container-low: #fbf2ef;
+  --secondary: #5f5e5e;
+  --on-surface-variant: #56423c;
+  --error-container: #ffdad6;
+  --secondary-fixed-dim: #c8c6c5;
+  --primary-container: #ff8a65;
+  --outline: #89726b;
+  --on-tertiary-fixed: #1a1c1c;
+  --on-tertiary: #ffffff;
+  --surface-container-highest: #e9e1de;
+  --error: #ba1a1a;
+  --surface-container: #f5ece9;
+  --secondary-container: #e2dfde;
+  --primary: #9f4122;
+  --secondary-fixed: #e5e2e1;
+  --on-tertiary-fixed-variant: #454747;
+  --surface-variant: #e9e1de;
+  --tertiary-fixed: #e2e2e2;
+  --on-primary-fixed: #3a0b00;
+  --surface-container-lowest: #ffffff;
+  --inverse-on-surface: #f8efec;
+  --background: #fff8f6;
+  --surface: #fff8f6;
+  --on-tertiary-container: #3d3f3f;
+  --surface-bright: #fff8f6;
+  --outline-variant: #ddc0b8;
+  --on-background: #1e1b19;
+  --surface-container-high: #efe6e3;
+  --on-primary: #ffffff;
+  --primary-fixed-dim: #ffb59e;
+  --inverse-surface: #342f2e;
+  --surface-dim: #e1d8d5;
+  --on-error: #ffffff;
+  --inverse-primary: #ffb59e;
+}

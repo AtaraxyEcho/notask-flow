@@ -1,0 +1,51 @@
+/* Dark/Night Personal Space Theme */
+[data-theme="dark"],
+.dark {
+  --on-primary-container: #ffdbd0;
+  --on-secondary-fixed: #e5e2e1;
+  --on-secondary-container: #e2dfde;
+  --tertiary-container: #424242;
+  --surface-tint: #ffb59e;
+  --on-primary-fixed-variant: #7f2a0d;
+  --on-secondary-fixed-variant: #c8c6c5;
+  --on-error-container: #ffdad6;
+  --on-surface: #e8e0dd;
+  --on-secondary: #353535;
+  --tertiary-fixed-dim: #c6c6c6;
+  --primary-fixed: #ffdbd0;
+  --tertiary: #c6c6c6;
+  --surface-container-low: #141210;
+  --secondary: #c8c6c5;
+  --on-surface-variant: #ddc0b8;
+  --error-container: #93000a;
+  --secondary-fixed-dim: #c8c6c5;
+  --primary-container: #7f2a0d;
+  --outline: #a08c85;
+  --on-tertiary-fixed: #1a1c1c;
+  --on-tertiary: #353535;
+  --surface-container-highest: #353130;
+  --error: #ffb4ab;
+  --surface-container: #1e1c1a;
+  --secondary-container: #4a4848;
+  --primary: #ffb59e;
+  --secondary-fixed: #e5e2e1;
+  --on-tertiary-fixed-variant: #8e9090;
+  --surface-variant: #56423c;
+  --tertiary-fixed: #e2e2e2;
+  --on-primary-fixed: #3a0b00;
+  --surface-container-lowest: #0e0c0b;
+  --inverse-on-surface: #1e1b19;
+  --background: #0e0c0b;
+  --surface: #141210;
+  --on-tertiary-container: #c6c6c6;
+  --surface-bright: #3a3735;
+  --outline-variant: #56423c;
+  --on-background: #e8e0dd;
+  --surface-container-high: #282624;
+  --on-primary: #5e1500;
+  --primary-fixed-dim: #ffb59e;
+  --inverse-surface: #e8e0dd;
+  --surface-dim: #0e0c0b;
+  --on-error: #690005;
+  --inverse-primary: #9f4122;
+}
