@@ -1,6 +1,74 @@
-.claude/
+# ==================== 系统文件 ====================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ==================== IDE/编辑器 ====================
 .idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+.factorypath
+*.code-workspace
+
+# ==================== 根目录 ====================
+.claude/
+CLAUDE.md
+MERGE_PLAN.md
+docs/
 issue.md
 
-docs/
+# ==================== Backend (Java/Spring) ====================
+backend/target/
+backend/.env
+backend/.env.*
+backend/logs/
+backend/*.log
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/out/
 
+# ==================== Frontend (Node/Vue) ====================
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/.vite/
+
+# ==================== Android (Kotlin/Gradle) ====================
+android/.gradle/
+android/build/
+android/app/build/
+android/core/build/
+android/data/build/
+android/domain/build/
+android/feature/build/
+android/local.properties
+android/keystore.properties
+android/secrets.properties
+android/google-services.json
+android/*.jks
+android/*.keystore
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+
+# ==================== Deploy ====================
+deploy/dev/.env
+deploy/prod/.env
+
+# ==================== 日志 ====================
+logs/
+*.log

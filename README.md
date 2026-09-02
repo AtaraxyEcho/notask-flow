@@ -32,10 +32,9 @@ notask-flow/
 ├── backend/          # Spring Boot 后端
 ├── frontend/         # Vue 3 前端
 ├── android/          # Kotlin Android 客户端
-├── deploy/           # Docker 部署配置
-│   ├── dev/          # 开发环境
-│   └── prod/         # 生产环境
-└── docs/             # 文档
+└── deploy/           # Docker 部署配置
+    ├── dev/          # 开发环境
+    └── prod/         # 生产环境
 ```
 
 ## 快速开始

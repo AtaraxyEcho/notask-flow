@@ -32,10 +32,9 @@ notask-flow/
 ├── backend/          # Spring Boot backend
 ├── frontend/         # Vue 3 frontend
 ├── android/          # Kotlin Android client
-├── deploy/           # Docker deployment configs
-│   ├── dev/          # Development environment
-│   └── prod/         # Production environment
-└── docs/             # Documentation
+└── deploy/           # Docker deployment configs
+    ├── dev/          # Development environment
+    └── prod/         # Production environment
 ```
 
 ## Quick Start
