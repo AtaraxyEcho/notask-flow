@@ -1,0 +1,33 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/notask_flow?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useSSL=true&serverTimezone=Asia/Hong_Kong}
+    username: ${MYSQL_USERNAME:notask}
+    password: ${MYSQL_PASSWORD:notask}
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_HOST_PORT:6379}
+      password: ${REDIS_PASSWORD:notask}
+      database: 0
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_HOST_PORT:5672}
+    username: ${RABBITMQ_USERNAME:notask}
+    password: ${RABBITMQ_PASSWORD:notask}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_ENDPOINT:http://127.0.0.1:9200}
+
+
+logging:
+  level:
+    com.notaskflow: debug
+
+notask-flow:
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket-name: ${MINIO_BUCKET:notask-flow}

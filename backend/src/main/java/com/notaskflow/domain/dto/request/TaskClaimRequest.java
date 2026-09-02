@@ -1,0 +1,20 @@
+package com.notaskflow.domain.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+/**
+ * 开放任务认领请求。
+ *
+ * @author LIN
+ */
+@Data
+public class TaskClaimRequest {
+
+    @NotBlank(message = "职责描述不能为空")
+    @Size(max = 500, message = "职责描述长度不能超过500")
+    private String responsibility;
+
+    private Boolean isRequired = true;
+}

@@ -1,0 +1,53 @@
+package com.notaskflow.domain.entity;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 空间文件管理条目实体。
+ *
+ * @author LIN
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("nt_file_item")
+public class ManagedFile {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    private Long attachmentId;
+
+    private Long spaceId;
+
+    private Long folderId;
+
+    private String displayName;
+
+    private Long createdBy;
+
+    private Boolean trashed;
+
+    private LocalDateTime deletedAt;
+
+    private Long deletedBy;
+
+    @TableLogic
+    @TableField(value = "is_deleted", fill = FieldFill.INSERT)
+    private Boolean isDeleted;
+
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime gmtCreate;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime gmtModified;
+}

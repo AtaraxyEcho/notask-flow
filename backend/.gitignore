@@ -1,0 +1,11 @@
+target/
+.m2/
+.idea/
+.vscode/
+*.iml
+logs/
+**/test/
+*.log
+.env
+.env.*
+!.env.example

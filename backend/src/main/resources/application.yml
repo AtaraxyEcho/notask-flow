@@ -1,0 +1,135 @@
+server:
+  address: 0.0.0.0
+  port: 8080
+
+spring:
+  application:
+    name: notask-flow-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: ${FILE_MAX_SIZE:50MB}
+      max-request-size: ${FILE_MAX_SIZE:50MB}
+  jackson:
+    time-zone: Asia/Hong_Kong
+    date-format: yyyy-MM-dd:HH:mm:ss
+  sql:
+    init:
+      mode: never
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          max-attempts: 3
+  mail:
+    host: ${MAIL_HOST:smtp.163.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          ssl:
+            enable: ${MAIL_SMTP_SSL_ENABLE:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
+          connectiontimeout: ${MAIL_SMTP_CONNECTION_TIMEOUT:5000}
+          timeout: ${MAIL_SMTP_TIMEOUT:5000}
+          writetimeout: ${MAIL_SMTP_WRITE_TIMEOUT:5000}
+  elasticsearch:
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:3s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:3s}
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-enums-package: com.notaskflow.common.enums
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+sa-token:
+  token-name: Authorization
+  token-prefix: Bearer
+  token-style: jwt-mixin
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:your-jwt-secret-key-change-me}
+  timeout: 14400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: ${SA_TOKEN_IS_SHARE:false}
+  is-log: true
+  check-permission-cache: false
+
+springdoc:
+  swagger-ui:
+    path: /index.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  config: classpath:log4j2-spring.xml
+
+notask-flow:
+  admin:
+    username: ${ADMIN_USERNAME:Administrator}
+    password: ${ADMIN_PASSWORD:change-me}
+  security:
+    csrf-enabled: ${SECURITY_CSRF_ENABLED:false}
+    allow-credentials: ${SECURITY_CORS_ALLOW_CREDENTIALS:false}
+    allowed-origins: ${SECURITY_ALLOWED_ORIGINS:http://localhost:3000,http://192.168.1.20:3000,http://127.0.0.1:3000}
+    content-security-policy: "${SECURITY_CONTENT_SECURITY_POLICY:default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: http: https:; media-src 'self' blob: http: https:; connect-src 'self' http: https: ws: wss:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'}"
+    permissions-policy: "${SECURITY_PERMISSIONS_POLICY:camera=(), microphone=(), geolocation=(), payment=()}"
+  invite:
+    default-expire-minutes: ${INVITE_DEFAULT_EXPIRE_MINUTES:30}
+  collab:
+    internal-token: ${COLLAB_INTERNAL_TOKEN:notask-flow-collab-internal-change-me}
+    realtime-broadcast-url: ${COLLAB_REALTIME_BROADCAST_URL:http://localhost:8081/internal/broadcast}
+  mail:
+    from: ${NOTASK_MAIL_FROM:no-reply@notask-flow.local}
+    app-base-url: ${NOTASK_APP_BASE_URL:http://localhost:3000}
+  file:
+    cleanup-enabled: ${FILE_CLEANUP_ENABLED:true}
+    cleanup-cron: ${FILE_CLEANUP_CRON:0 0 3 * * *}
+    trash-retention-days: ${FILE_TRASH_RETENTION_DAYS:30}
+    cleanup-batch-size: ${FILE_CLEANUP_BATCH_SIZE:100}
+    multipart-threshold-size: ${FILE_MULTIPART_THRESHOLD_SIZE:52428800}
+    chunk-size: ${FILE_CHUNK_SIZE:5242880}
+    chunk-upload-session-minutes: ${FILE_CHUNK_UPLOAD_SESSION_MINUTES:30}
+    chunk-temp-dir: ${FILE_CHUNK_TEMP_DIR:}
+  minio:
+    allowed-mime-types:
+      - application/octet-stream
+      - image/png
+      - image/jpeg
+      - image/gif
+      - image/webp
+      - image/svg+xml
+      - audio/*
+      - video/*
+      - application/pdf
+      - text/plain
+      - text/markdown
+      - text/csv
+      - application/json
+      - application/xml
+      - application/zip
+      - application/x-zip-compressed
+      - multipart/x-zip
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.ms-excel
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - application/vnd.ms-powerpoint
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation

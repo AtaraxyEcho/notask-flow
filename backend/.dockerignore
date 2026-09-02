@@ -1,0 +1,10 @@
+target/
+logs/
+.m2/
+.idea/
+.vscode/
+*.iml
+.mvn/
+**/test/
+*.log
+docker/

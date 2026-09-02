@@ -1,0 +1,270 @@
+name: notask-flow
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: notask-flow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-notask_flow}
+      MYSQL_USER: ${MYSQL_USERNAME:-notask}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-notask}
+      TZ: Asia/Hong_Kong
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - notask-flow
+
+  redis:
+    image: redis:7.2
+    container_name: notask-flow-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - ${REDIS_PASSWORD:-}
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a $${REDIS_PASSWORD:-} ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - notask-flow
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: notask-flow-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-notask}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-notask}
+      TZ: Asia/Hong_Kong
+    ports:
+      - "${RABBITMQ_HOST_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - notask-flow
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: notask-flow-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      TZ: Asia/Hong_Kong
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_HOST_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - notask-flow
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: notask-flow-minio-init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-notask-flow}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}"; do
+          sleep 2
+        done
+        mc mb --ignore-existing "local/$${MINIO_BUCKET}"
+    networks:
+      - notask-flow
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+    container_name: notask-flow-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      TZ: Asia/Hong_Kong
+    ports:
+      - "${ELASTICSEARCH_HOST_PORT:-9200}:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow\\&timeout=5s || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+    networks:
+      - notask-flow
+
+  app:
+    profiles:
+      - app
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: notask-flow-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-notask_flow}
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-notask}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-notask}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-notask}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-notask}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-notask-flow}
+      ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-true}
+      ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
+      ELASTICSEARCH_CONNECTION_TIMEOUT: ${ELASTICSEARCH_CONNECTION_TIMEOUT:-3s}
+      ELASTICSEARCH_SOCKET_TIMEOUT: ${ELASTICSEARCH_SOCKET_TIMEOUT:-3s}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-Administrator}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-admin-password}
+      SA_TOKEN_JWT_SECRET: ${SA_TOKEN_JWT_SECRET:-notask-flow-test-jwt-secret-change-me}
+      SA_TOKEN_IS_SHARE: ${SA_TOKEN_IS_SHARE:-false}
+      SECURITY_CSRF_ENABLED: ${SECURITY_CSRF_ENABLED:-false}
+      SECURITY_CORS_ALLOW_CREDENTIALS: ${SECURITY_CORS_ALLOW_CREDENTIALS:-false}
+      SECURITY_ALLOWED_ORIGINS: ${SECURITY_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      COLLAB_INTERNAL_TOKEN: ${COLLAB_INTERNAL_TOKEN:-notask-flow-collab-internal-change-me}
+      COLLAB_REALTIME_BROADCAST_URL: ${COLLAB_REALTIME_BROADCAST_URL:-http://collab-ws:8081/internal/broadcast}
+      NOTASK_MAIL_FROM: ${NOTASK_MAIL_FROM:-no-reply@notask-flow.local}
+      NOTASK_APP_BASE_URL: ${NOTASK_APP_BASE_URL:-http://localhost:3000}
+      MAIL_HOST: ${MAIL_HOST:-smtp.163.com}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_SSL_ENABLE: ${MAIL_SMTP_SSL_ENABLE:-true}
+      MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_SMTP_STARTTLS_ENABLE:-false}
+      MAIL_SMTP_CONNECTION_TIMEOUT: ${MAIL_SMTP_CONNECTION_TIMEOUT:-5000}
+      MAIL_SMTP_TIMEOUT: ${MAIL_SMTP_TIMEOUT:-5000}
+      MAIL_SMTP_WRITE_TIMEOUT: ${MAIL_SMTP_WRITE_TIMEOUT:-5000}
+      INVITE_DEFAULT_EXPIRE_MINUTES: ${INVITE_DEFAULT_EXPIRE_MINUTES:-30}
+      FILE_CLEANUP_ENABLED: ${FILE_CLEANUP_ENABLED:-true}
+      FILE_CLEANUP_CRON: ${FILE_CLEANUP_CRON:-0 0 3 * * *}
+      FILE_TRASH_RETENTION_DAYS: ${FILE_TRASH_RETENTION_DAYS:-30}
+      FILE_CLEANUP_BATCH_SIZE: ${FILE_CLEANUP_BATCH_SIZE:-100}
+      FILE_MULTIPART_THRESHOLD_SIZE: ${FILE_MULTIPART_THRESHOLD_SIZE:-52428800}
+      FILE_CHUNK_SIZE: ${FILE_CHUNK_SIZE:-5242880}
+      FILE_CHUNK_UPLOAD_SESSION_MINUTES: ${FILE_CHUNK_UPLOAD_SESSION_MINUTES:-30}
+      FILE_CHUNK_TEMP_DIR: ${FILE_CHUNK_TEMP_DIR:-}
+      TZ: Asia/Hong_Kong
+    ports:
+      - "${APP_HOST_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - notask-flow
+
+  collab-ws:
+    profiles:
+      - app
+    build:
+      context: ./docker/collab-ws
+      dockerfile: Dockerfile
+    container_name: notask-flow-collab-ws
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8081
+      WS_PATH: /ws
+      API_BASE_URL: ${COLLAB_API_BASE_URL:-http://app:8080}
+      TICKET_VERIFY_PATH: /api/v1/internal/collab/tickets/consume
+      SPACE_EVENT_TICKET_VERIFY_PATH: /api/v1/internal/collab/space-events/tickets/consume
+      INTERNAL_TOKEN: ${COLLAB_INTERNAL_TOKEN:-notask-flow-collab-internal-change-me}
+      COLLAB_DEBUG_LOGS: ${COLLAB_DEBUG_LOGS:-false}
+      TZ: Asia/Hong_Kong
+    ports:
+      - "${COLLAB_WS_HOST_PORT:-8081}:8081"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:8081/health').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - notask-flow
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    profiles:
+      - app
+    build:
+      context: ..
+      dockerfile: backend/docker/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${FRONTEND_API_BASE_URL:-/api/v1}
+        VITE_COLLAB_WS_URL: ${FRONTEND_COLLAB_WS_URL:-/ws}
+    container_name: notask-flow-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:80"
+    depends_on:
+      app:
+        condition: service_started
+      collab-ws:
+        condition: service_healthy
+    networks:
+      - notask-flow
+
+networks:
+  notask-flow:
+    driver: bridge
+
+volumes:
+  elasticsearch-data:

@@ -1,0 +1,16 @@
+{
+  "name": "notask-flow-collab-ws",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Notask Flow collaborative websocket scaffold service",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "lib0": "^0.2.99",
+    "ws": "^8.18.3",
+    "y-websocket": "^1.5.4",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.24"
+  }
+}
