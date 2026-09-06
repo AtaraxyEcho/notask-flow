@@ -56,24 +56,12 @@ fun LoginRoute(
         subtitle = stringResource(R.string.auth_login_subtitle),
         errorBanner = uiState.formError,
         bottomContent = {
-            AuthSwitchLine {
-                Text(
-                    text = stringResource(R.string.auth_no_account),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            AuthLinkLine(
+                prefix = stringResource(R.string.auth_no_account),
+                links = listOf(
+                    AuthLink(label = stringResource(R.string.auth_go_register), onClick = onRegisterClick)
                 )
-                TextButton(
-                    onClick = onRegisterClick,
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.auth_go_register),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            )
         }
     ) {
         AuthTextField(

@@ -65,24 +65,12 @@ fun RegisterRoute(
         errorBanner = uiState.errorMessage,
         successBanner = uiState.message,
         bottomContent = {
-            AuthSwitchLine {
-                Text(
-                    text = stringResource(R.string.auth_has_account),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            AuthLinkLine(
+                prefix = stringResource(R.string.auth_has_account),
+                links = listOf(
+                    AuthLink(label = stringResource(R.string.auth_back_to_login), onClick = onBack)
                 )
-                TextButton(
-                    onClick = onBack,
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.auth_back_to_login),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            )
         }
     ) {
         AuthTextField(

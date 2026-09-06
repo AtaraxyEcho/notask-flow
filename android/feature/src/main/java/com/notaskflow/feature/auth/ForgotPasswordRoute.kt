@@ -105,24 +105,12 @@ fun ForgotPasswordRoute(
                     enabled = true,
                     onClick = viewModel::sendCode
                 )
-                AuthSwitchLine {
-                    Text(
-                        text = stringResource(R.string.auth_remember_password),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                AuthLinkLine(
+                    prefix = stringResource(R.string.auth_remember_password),
+                    links = listOf(
+                        AuthLink(label = stringResource(R.string.auth_back_to_login), onClick = onBack)
                     )
-                    TextButton(
-                        onClick = onBack,
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.auth_back_to_login),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                )
             }
 
             FORGOT_STEP_CODE -> {
@@ -140,43 +128,28 @@ fun ForgotPasswordRoute(
                     enabled = true,
                     onClick = viewModel::verifyCode
                 )
-                AuthSwitchLine {
-                    Text(
-                        text = stringResource(R.string.auth_no_code),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TextButton(
-                        onClick = viewModel::sendCode,
-                        enabled = uiState.resendCountdown == 0 && !uiState.isSubmitting,
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text = if (uiState.resendCountdown > 0) {
+                AuthLinkLine(
+                    prefix = stringResource(R.string.auth_no_code),
+                    links = listOf(
+                        AuthLink(
+                            label = if (uiState.resendCountdown > 0) {
                                 stringResource(R.string.auth_resend_in, uiState.resendCountdown)
                             } else {
                                 stringResource(R.string.auth_resend_code)
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (uiState.resendCountdown > 0) {
-                                colors.Placeholder
+                            onClick = if (uiState.resendCountdown > 0 || uiState.isSubmitting) {
+                                null
                             } else {
-                                colors.Ink
-                            }
+                                viewModel::sendCode
+                            },
+                            muted = uiState.resendCountdown > 0
+                        ),
+                        AuthLink(
+                            label = stringResource(R.string.auth_edit_email),
+                            onClick = if (uiState.isSubmitting) null else viewModel::editEmail
                         )
-                    }
-                    TextButton(
-                        onClick = viewModel::editEmail,
-                        enabled = !uiState.isSubmitting,
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.auth_edit_email),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                    )
+                )
             }
 
             else -> {

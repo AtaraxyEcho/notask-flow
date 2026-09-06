@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -75,7 +73,13 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -782,17 +786,62 @@ internal fun AuthDivider(modifier: Modifier = Modifier) {
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * 单行式引导文案：前缀 + 若干内联链接（如"没有账号？立即注册"）。
+ * 单个 Text 承载全部内容，换行后仍然整体居中对齐，链接词独立响应点击。
+ */
+internal data class AuthLink(
+    val label: String,
+    val onClick: (() -> Unit)? = null,
+    val muted: Boolean = false
+)
+
+/**
+ * 单行式引导文案：前缀 + 若干内联链接（如"没有账号？立即注册"）。
+ * 单个 Text 承载全部内容，换行后仍整体居中对齐；链接词独立响应点击。
+ */
 @Composable
-internal fun AuthSwitchLine(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    // FlowRow：英文等长文案在窄屏换行后仍保持居中对齐，而不是被挤到一侧
-    FlowRow(
+internal fun AuthLinkLine(
+    prefix: String,
+    links: List<AuthLink>,
+    modifier: Modifier = Modifier
+) {
+    Text(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        content()
-    }
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.bodyMedium.copy(color = AuthPureColors.Secondary),
+        text = buildAnnotatedString {
+            append(prefix)
+            append(" ")
+            links.forEach { link ->
+                if (link.onClick != null) {
+                    withLink(
+                        LinkAnnotation.Clickable(
+                            tag = link.label,
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    color = AuthPureColors.Ink,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            ),
+                            linkInteractionListener = { link.onClick?.invoke() }
+                        )
+                    ) {
+                        append(link.label)
+                    }
+                } else {
+                    withStyle(
+                        SpanStyle(
+                            color = if (link.muted) AuthPureColors.Placeholder else AuthPureColors.Secondary
+                        )
+                    ) {
+                        append(link.label)
+                    }
+                }
+                append(" ")
+            }
+        }
+    )
 }
 
 @Composable

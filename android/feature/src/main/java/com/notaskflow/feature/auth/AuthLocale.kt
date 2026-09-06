@@ -2,6 +2,7 @@ package com.notaskflow.feature.auth
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.ContextWrapper
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import java.util.Locale
@@ -49,6 +49,26 @@ internal object AuthLocaleController {
     }
 }
 
+/** 包装 Activity 并仅重写资源，保持 Context 链可回溯到 Activity（Hilt/导航依赖此约束）。 */
+private class AuthLocaleContextWrapper(
+    base: Context,
+    private val localizedResources: android.content.res.Resources
+) : android.content.ContextWrapper(base) {
+    override fun getResources() = localizedResources
+
+    companion object {
+        fun wrap(context: Context, tag: String): ContextWrapper {
+            val config = Configuration(context.resources.configuration).apply {
+                setLocale(Locale.forLanguageTag(tag))
+            }
+            val localizedContext = context.createConfigurationContext(config)
+            // base 必须是 Activity 本身（而非 createConfigurationContext 的 ContextImpl），
+            // 否则 hiltViewModel() 无法沿 Context 链找到 Activity
+            return AuthLocaleContextWrapper(context, localizedContext.resources)
+        }
+    }
+}
+
 /**
  * 为认证子树提供所选语言的资源配置；
  * 其余页面不经过此 Provider，不受语言切换影响。
@@ -57,17 +77,10 @@ internal object AuthLocaleController {
 fun AuthLocaleProvider(content: @Composable () -> Unit) {
     val context = LocalContext.current
     remember { AuthLocaleController.init(context) }
-    val configuration = LocalConfiguration.current
-    val localizedConfiguration = remember(AuthLocaleController.tag) {
-        Configuration(configuration).apply {
-            setLocale(Locale.forLanguageTag(AuthLocaleController.tag))
-        }
-    }
-    val localizedContext = remember(localizedConfiguration) {
-        context.createConfigurationContext(localizedConfiguration)
+    val localizedContext = remember(AuthLocaleController.tag) {
+        AuthLocaleContextWrapper.wrap(context, AuthLocaleController.tag)
     }
     androidx.compose.runtime.CompositionLocalProvider(
-        LocalConfiguration provides localizedConfiguration,
         LocalContext provides localizedContext,
         content = content
     )
