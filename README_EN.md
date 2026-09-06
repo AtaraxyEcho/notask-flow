@@ -18,15 +18,17 @@ Notask Flow is a multi-platform platform that combines **personal knowledge mana
 
 **Web app** (full gallery in [frontend/img/](frontend/img/)):
 
-| Login | Personal Space · Notes |
+| Login | Register |
 |:---:|:---:|
-| ![Login](frontend/img/登录页.png) | ![Personal notes](frontend/img/个人空间-笔记.png) |
-| **Personal Space · Tasks** | **Personal Space · Statistics** |
-| ![Personal tasks](frontend/img/个人空间-任务.png) | ![Personal stats](frontend/img/个人空间-统计.png) |
-| **Team Space · Task Kanban** | **Team Space · Document Collaboration** |
-| ![Team kanban](frontend/img/团队空间-任务看板.png) | ![Team collab](frontend/img/团队空间-文档协作.png) |
-| **Team Space · Project Details** | **Team Space · Reports** |
-| ![Team project](frontend/img/团队空间-项目详情.png) | ![Team reports](frontend/img/团队空间-报表.png) |
+| ![Login](frontend/img/登录页.png) | ![Register](frontend/img/注册页.png) |
+| **Personal Space · Notes** | **Personal Space · Tasks** |
+| ![Personal notes](frontend/img/个人空间-笔记.png) | ![Personal tasks](frontend/img/个人空间-任务.png) |
+| **Personal Space · Statistics** | **Team Space · Task Kanban** |
+| ![Personal stats](frontend/img/个人空间-统计.png) | ![Team kanban](frontend/img/团队空间-任务看板.png) |
+| **Team Space · Document Collaboration** | **Team Space · Project Details** |
+| ![Team collab](frontend/img/团队空间-文档协作.png) | ![Team project](frontend/img/团队空间-项目详情.png) |
+| **Team Space · Reports** | **Team Space · Members** |
+| ![Team reports](frontend/img/团队空间-报表.png) | ![Team members](frontend/img/团队空间-成员管理.png) |
 
 **Android app** (full gallery in [android/img/](android/img/)):
 

@@ -16,7 +16,7 @@ Full gallery in [img/](img/):
 
 | Login | Home |
 |:---:|:---:|
-| ![Login](./img/login.jpg) | ![Home](./img/home.jpg) |
+| ![Login](./img/login.png) | ![Home](./img/home.jpg) |
 | **Tasks** | **Note Editing** |
 | ![Tasks](./img/task.jpg) | ![Note editing](./img/note-editor.jpg) |
 | **Projects** | **Global Search** |
