@@ -16,11 +16,11 @@ Full gallery in [img/](img/):
 
 | Login | Home |
 |:---:|:---:|
-| ![Login](img/%E7%99%BB%E5%BD%95.jpg) | ![Home](img/%E9%A6%96%E9%A1%B5.jpg) |
+| ![Login](./img/login.jpg) | ![Home](./img/home.jpg) |
 | **Tasks** | **Note Editing** |
-| ![Tasks](img/%E4%BB%BB%E5%8A%A1.jpg) | ![Note editing](img/%E7%AC%94%E8%AE%B0%E7%BC%96%E8%BE%91.jpg) |
+| ![Tasks](./img/task.jpg) | ![Note editing](./img/note-editor.jpg) |
 | **Projects** | **Global Search** |
-| ![Projects](img/%E9%A1%B9%E7%9B%AE.jpg) | ![Global search](img/%E5%85%A8%E5%B1%80%E6%90%9C%E7%B4%A2.jpg) |
+| ![Projects](./img/project.jpg) | ![Global search](./img/global-search.jpg) |
 
 ## Tech Stack
 
