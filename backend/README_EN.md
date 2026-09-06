@@ -169,6 +169,10 @@ Key configuration index (see the files themselves for values; only names and pur
 | `sa-token.timeout` | `application.yml` | Login lifetime, default 14400s |
 | `FILE_MAX_SIZE` | `application.yml` | Max upload size per file, default 50MB |
 | `notask-flow.file.*` | `application.yml` | Chunked upload (5MB chunks), trash retention (30 days) and daily 3 AM cleanup |
+| `spring.mail.*` / `NOTASK_MAIL_FROM` | `application.yml` | SMTP mail sending (codes/notifications); mail is unavailable when unset |
+| `INVITE_DEFAULT_EXPIRE_MINUTES` | `application.yml` | Default team invite expiry, 30 minutes |
+| `SA_TOKEN_IS_SHARE` / `REDIS_DATABASE` | `application.yml` | Session sharing switch and Redis database index |
+| `SECURITY_ALLOWED_ORIGINS` | `application.yml` | CORS allowed frontend origins, comma-separated |
 | `notask-flow.security.allowed-origins` | `application.yml` | CORS whitelist |
 | `notask-flow.collab.*` | `application.yml` | Collab integration: `internal-token`, `realtime-broadcast-url` (pushes events to collab-ws) |
 | `notask-flow.admin.*` | `application.yml` | Initial admin-console account |
@@ -203,4 +207,4 @@ The test scaffolding is in place (H2 + spring-boot-starter-test); the repository
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

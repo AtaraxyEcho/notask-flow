@@ -34,7 +34,7 @@ Notask Flow 是一个集**个人知识管理**与**团队任务协作**于一体
 
 | 首页 | 笔记编辑 |
 |:---:|:---:|
-| ![首页](android/img/首页.jpg) | ![笔记编辑](android/img/笔记编辑.jpg) |
+| ![首页](android/img/home.jpg) | ![笔记编辑](android/img/note-editor.jpg) |
 
 ## 核心特性
 
@@ -179,4 +179,4 @@ Android 端开发见 [android/README.md](android/README.md#快速开始)。
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

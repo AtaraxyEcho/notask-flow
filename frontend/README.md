@@ -94,6 +94,7 @@ npm run dev
 | `VITE_COLLAB_WS_URL` | Yjs 协作与空间实时事件的 WebSocket 路径 | `/ws` |
 | `VITE_DEV_API_PROXY_TARGET` | 仅 `npm run dev` 的 `/api` 代理目标 | `http://localhost:8080` |
 | `VITE_DEV_COLLAB_WS_PROXY_TARGET` | 仅 `npm run dev` 的 `/ws` 代理目标 | `http://localhost:8081` |
+| `VITE_APP_VERSION` | 登录时上报的客户端版本号(留空回退为 `web`) | 与 `package.json` 一致 |
 
 ## 核心设计
 
@@ -156,4 +157,4 @@ Pinia store 位于 `src/stores/`:`user`、`space`、`admin`、`ui`(这 4 个经 
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

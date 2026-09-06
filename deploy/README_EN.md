@@ -125,4 +125,4 @@ All ports are adjustable via `*_HOST_PORT` variables in `.env` (including `RABBI
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

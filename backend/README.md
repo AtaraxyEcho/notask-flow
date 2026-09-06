@@ -169,6 +169,10 @@ Profile 由 `SPRING_PROFILES_ACTIVE` 控制,默认 `dev`:
 | `sa-token.timeout` | `application.yml` | 登录有效期,默认 14400s |
 | `FILE_MAX_SIZE` | `application.yml` | 单文件上传上限,默认 50MB |
 | `notask-flow.file.*` | `application.yml` | 分片上传(chunk-size 5MB)、回收站保留天数(30 天)与每日 3 点定时清理 |
+| `spring.mail.*` / `NOTASK_MAIL_FROM` | `application.yml` | SMTP 邮件发送(验证码/通知),未配置则邮件功能不可用 |
+| `INVITE_DEFAULT_EXPIRE_MINUTES` | `application.yml` | 团队邀请码默认有效期,默认 30 分钟 |
+| `SA_TOKEN_IS_SHARE` / `REDIS_DATABASE` | `application.yml` | 会话共享开关与 Redis 逻辑库 |
+| `SECURITY_ALLOWED_ORIGINS` | `application.yml` | CORS 允许的前端来源,逗号分隔 |
 | `notask-flow.security.allowed-origins` | `application.yml` | CORS 白名单 |
 | `notask-flow.collab.*` | `application.yml` | 协同集成:`internal-token`(内部鉴权)、`realtime-broadcast-url`(事件推送到 collab-ws) |
 | `notask-flow.admin.*` | `application.yml` | 管理后台初始账号 |
@@ -203,4 +207,4 @@ mvn test
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

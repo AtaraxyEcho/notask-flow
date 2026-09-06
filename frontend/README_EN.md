@@ -94,6 +94,7 @@ Template in [`.env.example`](.env.example); copy to `.env` / `.env.local` and ed
 | `VITE_COLLAB_WS_URL` | WebSocket path for Yjs collab and space realtime events | `/ws` |
 | `VITE_DEV_API_PROXY_TARGET` | `/api` proxy target for `npm run dev` only | `http://localhost:8080` |
 | `VITE_DEV_COLLAB_WS_PROXY_TARGET` | `/ws` proxy target for `npm run dev` only | `http://localhost:8081` |
+| `VITE_APP_VERSION` | Client version reported on login (falls back to `web`) | Matches `package.json` |
 
 ## Core Design
 
@@ -156,4 +157,4 @@ The `manualChunks` in `vite.config.ts` splits third-party dependencies into 6 ve
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06

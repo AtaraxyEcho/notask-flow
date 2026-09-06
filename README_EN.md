@@ -34,7 +34,7 @@ Notask Flow is a multi-platform platform that combines **personal knowledge mana
 
 | Home | Note Editing |
 |:---:|:---:|
-| ![Home](android/img/首页.jpg) | ![Note editing](android/img/笔记编辑.jpg) |
+| ![Home](android/img/home.jpg) | ![Note editing](android/img/note-editor.jpg) |
 
 ## Features
 
@@ -179,4 +179,4 @@ This project is licensed under the [GNU Affero General Public License v3.0](LICE
 
 ---
 
-Last Updated: 2026-09-04
+Last Updated: 2026-09-06
