@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_app_name">Notask Flow</string>
+    <string name="auth_back">返回</string>
+    <string name="auth_remember_password">想起密码了？</string>
+    <string name="auth_copyright">© %1$d Notask Flow</string>
+
+    <!-- 登录 -->
+    <string name="auth_login_title">欢迎回来</string>
+    <string name="auth_login_subtitle">登录后继续管理你的任务、笔记与团队协作</string>
+    <string name="auth_account_label">用户名或邮箱</string>
+    <string name="auth_account_placeholder">输入用户名或邮箱</string>
+    <string name="auth_account_helper">支持用户名或注册邮箱登录</string>
+    <string name="auth_account_error">请输入用户名或邮箱</string>
+    <string name="auth_password_label">密码</string>
+    <string name="auth_password_placeholder">输入登录密码</string>
+    <string name="auth_password_error">请输入密码</string>
+    <string name="auth_hide_password">隐藏密码</string>
+    <string name="auth_show_password">显示密码</string>
+    <string name="auth_remember_me">记住我</string>
+    <string name="auth_forgot_password">忘记密码？</string>
+    <string name="auth_sign_in">登录</string>
+    <string name="auth_signing_in">登录中…</string>
+    <string name="auth_login_failed">登录失败，请稍后重试</string>
+    <string name="auth_no_account">没有账号？</string>
+    <string name="auth_go_register">立即注册</string>
+
+    <!-- 注册 -->
+    <string name="auth_register_title">创建您的账户</string>
+    <string name="auth_register_subtitle">请先完成邮箱验证，再开始您的个人任务与笔记管理之旅</string>
+    <string name="auth_username_label">用户名</string>
+    <string name="auth_username_placeholder">用于登录的唯一账号</string>
+    <string name="auth_username_error">请输入用户名</string>
+    <string name="auth_nickname_label">用户昵称（选填）</string>
+    <string name="auth_nickname_placeholder">大家在空间里怎么称呼你</string>
+    <string name="auth_email_label">邮箱</string>
+    <string name="auth_email_error">请输入邮箱</string>
+    <string name="auth_email_invalid">请输入有效的邮箱地址</string>
+    <string name="auth_password_create_label">设置密码</string>
+    <string name="auth_password_create_placeholder">至少 8 位，建议包含字母和数字</string>
+    <string name="auth_password_min_error">密码至少 8 位</string>
+    <string name="auth_confirm_password_label">确认密码</string>
+    <string name="auth_confirm_password_placeholder">再次输入密码</string>
+    <string name="auth_password_mismatch">两次输入的密码不一致</string>
+    <string name="auth_strength_value">强度：%1$s</string>
+    <string name="auth_strength_empty">未输入</string>
+    <string name="auth_strength_weak">弱</string>
+    <string name="auth_strength_fair">中</string>
+    <string name="auth_strength_good">良</string>
+    <string name="auth_strength_strong">强</string>
+    <string name="auth_email_code_label">邮箱验证码</string>
+    <string name="auth_email_code_hint">点击"获取验证码"，我们将向您的邮箱发送 6 位数字验证码。</string>
+    <string name="auth_get_code">获取验证码</string>
+    <string name="auth_resend_in">%1$d 秒后可重发</string>
+    <string name="auth_code_error">请输入 6 位邮箱验证码</string>
+    <string name="auth_code_sent">验证码已发送</string>
+    <string name="auth_send_code_failed">发送验证码失败</string>
+    <string name="auth_invite_code_label">团队邀请码</string>
+    <string name="auth_invite_code_placeholder">如果有，请填写</string>
+    <string name="auth_optional">（选填）</string>
+    <string name="auth_terms_prefix">我已阅读并同意</string>
+    <string name="auth_terms_title">服务条款</string>
+    <string name="auth_and">与</string>
+    <string name="auth_privacy_title">隐私政策</string>
+    <string name="auth_accept_terms_error">请先同意服务条款与隐私政策</string>
+    <string name="auth_create_account">创建账号</string>
+    <string name="auth_registering">注册中…</string>
+    <string name="auth_register_success">注册成功，请登录</string>
+    <string name="auth_register_failed">注册失败</string>
+    <string name="auth_has_account">已有账号？</string>
+    <string name="auth_back_to_login">返回登录</string>
+
+    <!-- 忘记密码 -->
+    <string name="auth_forgot_title">找回密码</string>
+    <string name="auth_forgot_subtitle">输入注册邮箱验证身份后，即可设置新的登录密码</string>
+    <string name="auth_step_email">输入邮箱</string>
+    <string name="auth_step_code">安全验证码</string>
+    <string name="auth_step_password">设置新密码</string>
+    <string name="auth_forgot_email_label">邮箱地址</string>
+    <string name="auth_forgot_email_placeholder">输入注册邮箱</string>
+    <string name="auth_forgot_email_error">请输入邮箱</string>
+    <string name="auth_send_code">发送验证码</string>
+    <string name="auth_forgot_code_label">验证码</string>
+    <string name="auth_forgot_code_placeholder">输入邮箱验证码</string>
+    <string name="auth_forgot_code_error">请输入邮箱和 6 位验证码</string>
+    <string name="auth_no_code">没有收到验证码？</string>
+    <string name="auth_resend_code">重新发送</string>
+    <string name="auth_edit_email">修改邮箱</string>
+    <string name="auth_verify_code">校验验证码</string>
+    <string name="auth_code_verified">验证码已通过，请设置新密码</string>
+    <string name="auth_verify_failed">验证码校验失败</string>
+    <string name="auth_new_password_label">新密码</string>
+    <string name="auth_new_password_placeholder">设置新的登录密码</string>
+    <string name="auth_new_password_min_error">新密码至少 8 位</string>
+    <string name="auth_confirm_new_password_label">确认新密码</string>
+    <string name="auth_confirm_new_password_placeholder">再次输入新密码</string>
+    <string name="auth_reset_token_missing">请先校验验证码</string>
+    <string name="auth_reset_password">重置密码</string>
+    <string name="auth_reset_success">密码已重置</string>
+    <string name="auth_reset_failed">重置密码失败</string>
+    <string name="auth_forgot_footer">重置完成后会自动返回登录页</string>
+</resources>

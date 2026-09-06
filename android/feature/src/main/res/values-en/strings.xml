@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_app_name">Notask Flow</string>
+    <string name="auth_back">Back</string>
+    <string name="auth_remember_password">Remember your password?</string>
+    <string name="auth_copyright">© %1$d Notask Flow</string>
+
+    <!-- Sign in -->
+    <string name="auth_login_title">Welcome Back</string>
+    <string name="auth_login_subtitle">Sign in to keep managing your tasks, notes and team collaboration</string>
+    <string name="auth_account_label">Username or Email</string>
+    <string name="auth_account_placeholder">Enter your username or email</string>
+    <string name="auth_account_helper">Use your username or registered email</string>
+    <string name="auth_account_error">Please enter your username or email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_placeholder">Enter your password</string>
+    <string name="auth_password_error">Please enter your password</string>
+    <string name="auth_hide_password">Hide password</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_remember_me">Remember me</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_signing_in">Signing in…</string>
+    <string name="auth_login_failed">Sign-in failed. Please try again later.</string>
+    <string name="auth_no_account">Don\'t have an account?</string>
+    <string name="auth_go_register">Register now</string>
+
+    <!-- Register -->
+    <string name="auth_register_title">Create Your Account</string>
+    <string name="auth_register_subtitle">Verify your email first, then start your personal tasks and notes journey</string>
+    <string name="auth_username_label">Username</string>
+    <string name="auth_username_placeholder">A unique account for sign-in</string>
+    <string name="auth_username_error">Please enter a username</string>
+    <string name="auth_nickname_label">Display Name (Optional)</string>
+    <string name="auth_nickname_placeholder">How teammates will see you</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_error">Please enter your email</string>
+    <string name="auth_email_invalid">Please enter a valid email address</string>
+    <string name="auth_password_create_label">Create Password</string>
+    <string name="auth_password_create_placeholder">At least 8 characters, letters and digits recommended</string>
+    <string name="auth_password_min_error">Password must be at least 8 characters</string>
+    <string name="auth_confirm_password_label">Confirm Password</string>
+    <string name="auth_confirm_password_placeholder">Enter the password again</string>
+    <string name="auth_password_mismatch">The two passwords do not match</string>
+    <string name="auth_strength_value">Strength: %1$s</string>
+    <string name="auth_strength_empty">Empty</string>
+    <string name="auth_strength_weak">Weak</string>
+    <string name="auth_strength_fair">Fair</string>
+    <string name="auth_strength_good">Good</string>
+    <string name="auth_strength_strong">Strong</string>
+    <string name="auth_email_code_label">Email Code</string>
+    <string name="auth_email_code_hint">Tap "Get Code" and we will send a 6-digit code to your email.</string>
+    <string name="auth_get_code">Get Code</string>
+    <string name="auth_resend_in">Resend in %1$ds</string>
+    <string name="auth_code_error">Please enter the 6-digit email code</string>
+    <string name="auth_code_sent">Verification code sent</string>
+    <string name="auth_send_code_failed">Failed to send the code</string>
+    <string name="auth_invite_code_label">Team Invite Code</string>
+    <string name="auth_invite_code_placeholder">Enter it if you have one</string>
+    <string name="auth_optional">(Optional)</string>
+    <string name="auth_terms_prefix">I have read and agree to the</string>
+    <string name="auth_terms_title">Terms of Service</string>
+    <string name="auth_and">and</string>
+    <string name="auth_privacy_title">Privacy Policy</string>
+    <string name="auth_accept_terms_error">Please agree to the Terms of Service and Privacy Policy first</string>
+    <string name="auth_create_account">Sign Up</string>
+    <string name="auth_registering">Registering…</string>
+    <string name="auth_register_success">Registered. Please sign in.</string>
+    <string name="auth_register_failed">Registration failed</string>
+    <string name="auth_has_account">Already have an account?</string>
+    <string name="auth_back_to_login">Back to sign in</string>
+
+    <!-- Forgot password -->
+    <string name="auth_forgot_title">Reset Password</string>
+    <string name="auth_forgot_subtitle">Verify your registered email, then set a new sign-in password</string>
+    <string name="auth_step_email">Email</string>
+    <string name="auth_step_code">Verification Code</string>
+    <string name="auth_step_password">New Password</string>
+    <string name="auth_forgot_email_label">Email Address</string>
+    <string name="auth_forgot_email_placeholder">Enter your registered email</string>
+    <string name="auth_forgot_email_error">Please enter your email</string>
+    <string name="auth_send_code">Send Code</string>
+    <string name="auth_forgot_code_label">Verification Code</string>
+    <string name="auth_forgot_code_placeholder">Enter the email code</string>
+    <string name="auth_forgot_code_error">Please enter your email and the 6-digit code</string>
+    <string name="auth_no_code">Didn\'t receive the code?</string>
+    <string name="auth_resend_code">Resend code</string>
+    <string name="auth_edit_email">Edit email</string>
+    <string name="auth_verify_code">Verify Code</string>
+    <string name="auth_code_verified">Code verified. Set your new password.</string>
+    <string name="auth_verify_failed">Code verification failed</string>
+    <string name="auth_new_password_label">New Password</string>
+    <string name="auth_new_password_placeholder">Set a new sign-in password</string>
+    <string name="auth_new_password_min_error">New password must be at least 8 characters</string>
+    <string name="auth_confirm_new_password_label">Confirm New Password</string>
+    <string name="auth_confirm_new_password_placeholder">Enter the new password again</string>
+    <string name="auth_reset_token_missing">Verify the code first</string>
+    <string name="auth_reset_password">Reset Password</string>
+    <string name="auth_reset_success">Password has been reset</string>
+    <string name="auth_reset_failed">Failed to reset password</string>
+    <string name="auth_forgot_footer">You will return to the sign-in page after the reset</string>
+</resources>

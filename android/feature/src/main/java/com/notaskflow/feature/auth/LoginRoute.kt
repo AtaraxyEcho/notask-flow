@@ -1,21 +1,16 @@
 package com.notaskflow.feature.auth
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,7 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.notaskflow.core.ui.theme.SunriseColors
+import com.notaskflow.feature.R
 
 @Composable
 fun LoginRoute(
@@ -53,130 +49,121 @@ fun LoginRoute(
             }
         }
     }
-    LoginScreen(
-        uiState = uiState,
-        onAccountChange = viewModel::onAccountChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
-        onToggleRememberMe = viewModel::toggleRememberMe,
-        onLoginClick = viewModel::onLoginClick,
-        onRegisterClick = onRegisterClick,
-        onForgotPasswordClick = onForgotPasswordClick
-    )
-}
-
-@Composable
-fun LoginScreen(
-    uiState: LoginUiState,
-    onAccountChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onTogglePasswordVisibility: () -> Unit,
-    onToggleRememberMe: () -> Unit,
-    onLoginClick: () -> Unit,
-    onRegisterClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit
-) {
     val focusManager = LocalFocusManager.current
 
-    AuthFormScaffold(
-        title = "欢迎回来",
-        subtitle = "登录后继续管理你的任务、笔记与团队协作",
-        icon = Icons.Filled.Email,
-        onBack = {},
-        showBackButton = false
+    AuthPureScaffold(
+        title = stringResource(R.string.auth_login_title),
+        subtitle = stringResource(R.string.auth_login_subtitle),
+        errorBanner = uiState.formError,
+        bottomContent = {
+            AuthSwitchLine {
+                Text(
+                    text = stringResource(R.string.auth_no_account),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                TextButton(
+                    onClick = onRegisterClick,
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.auth_go_register),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
     ) {
         AuthTextField(
             value = uiState.account,
-            onValueChange = onAccountChange,
-            label = "账号或邮箱",
-            placeholder = "输入用户名或邮箱",
-            leadingIcon = Icons.Filled.Email,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
-            ),
+            onValueChange = viewModel::onAccountChange,
+            label = stringResource(R.string.auth_account_label),
+            placeholder = stringResource(R.string.auth_account_placeholder),
+            errorMessage = uiState.accountError,
+            helperText = stringResource(R.string.auth_account_helper),
+            required = true,
+            keyboardType = KeyboardType.Email,
             keyboardActions = KeyboardActions(
                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
             )
         )
         AuthTextField(
             value = uiState.password,
-            onValueChange = onPasswordChange,
-            label = "密码",
-            placeholder = "输入登录密码",
-            leadingIcon = Icons.Filled.Lock,
-            visualTransformation = if (uiState.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
+            onValueChange = viewModel::onPasswordChange,
+            label = stringResource(R.string.auth_password_label),
+            placeholder = stringResource(R.string.auth_password_placeholder),
+            errorMessage = uiState.passwordError,
+            required = true,
+            visualTransformation = if (uiState.isPasswordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            keyboardType = KeyboardType.Password,
             keyboardActions = KeyboardActions(
                 onDone = {
                     focusManager.clearFocus()
-                    onLoginClick()
+                    viewModel.onLoginClick()
                 }
             ),
             trailingContent = {
-                IconButton(onClick = onTogglePasswordVisibility, modifier = Modifier.size(44.dp)) {
+                IconButton(
+                    onClick = viewModel::togglePasswordVisibility,
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Icon(
                         imageVector = if (uiState.isPasswordVisible) {
                             Icons.Filled.Visibility
                         } else {
                             Icons.Filled.VisibilityOff
                         },
-                        contentDescription = if (uiState.isPasswordVisible) "隐藏密码" else "显示密码"
+                        contentDescription = if (uiState.isPasswordVisible) {
+                            stringResource(R.string.auth_hide_password)
+                        } else {
+                            stringResource(R.string.auth_show_password)
+                        },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
         )
-        uiState.errorMessage?.let { message ->
-            AuthMessage(text = message, isError = true)
-        }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = uiState.rememberMe,
-                    onCheckedChange = { onToggleRememberMe() },
-                    colors = CheckboxDefaults.colors(checkedColor = SunriseColors.primary)
-                )
+            AuthCheckboxRow(
+                checked = uiState.rememberMe,
+                onCheckedChange = { viewModel.toggleRememberMe() },
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    text = "记住我",
+                    text = stringResource(R.string.auth_remember_me),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SunriseColors.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            TextButton(onClick = onForgotPasswordClick) {
-                Text(text = "忘记密码？", color = SunriseColors.primary)
+            TextButton(
+                onClick = onForgotPasswordClick,
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.auth_forgot_password),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
         AuthPrimaryButton(
-            text = "登录",
+            text = stringResource(R.string.auth_sign_in),
             loading = uiState.isLoading,
             enabled = true,
-            onClick = onLoginClick
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "没有账号？",
-                style = MaterialTheme.typography.bodyMedium,
-                color = SunriseColors.onSurfaceVariant
-            )
-            TextButton(onClick = onRegisterClick) {
-                Text(
-                    text = "立即注册",
-                    color = SunriseColors.primary,
-                    fontWeight = FontWeight.Bold
-                )
+            onClick = {
+                focusManager.clearFocus()
+                viewModel.onLoginClick()
             }
-        }
+        )
     }
 }

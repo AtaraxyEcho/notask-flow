@@ -26,9 +26,11 @@ import com.notaskflow.core.model.SpaceType as UiSpaceType
 import com.notaskflow.core.ui.components.BottomNavTab
 import com.notaskflow.core.ui.components.SpaceItem
 import com.notaskflow.core.ui.theme.NotaskFlowTheme
+import com.notaskflow.core.ui.theme.authpure.AuthPureTheme
 import com.notaskflow.domain.model.Space
 import com.notaskflow.domain.model.SpaceType
 import com.notaskflow.domain.model.NotificationBusinessType
+import com.notaskflow.feature.auth.AuthLocaleProvider
 import com.notaskflow.feature.auth.ForgotPasswordRoute
 import com.notaskflow.feature.auth.LoginRoute
 import com.notaskflow.feature.auth.RegisterRoute
@@ -85,22 +87,34 @@ private fun NotaskFlowApp(
             startDestination = if (appUiState.isLoggedIn) AppRoute.Home else AppRoute.Login
         ) {
             composable(AppRoute.Login) {
-                LoginRoute(
-                    onLoginSuccess = {
-                        appViewModel.refreshSession(showInitializing = true)
-                        navController.navigate(AppRoute.Home) {
-                            popUpTo(AppRoute.Login) { inclusive = true }
-                        }
-                    },
-                    onRegisterClick = { navController.navigate(AppRoute.Register) },
-                    onForgotPasswordClick = { navController.navigate(AppRoute.ForgotPassword) }
-                )
+                AuthPureTheme {
+                    AuthLocaleProvider {
+                        LoginRoute(
+                            onLoginSuccess = {
+                                appViewModel.refreshSession(showInitializing = true)
+                                navController.navigate(AppRoute.Home) {
+                                    popUpTo(AppRoute.Login) { inclusive = true }
+                                }
+                            },
+                            onRegisterClick = { navController.navigate(AppRoute.Register) },
+                            onForgotPasswordClick = { navController.navigate(AppRoute.ForgotPassword) }
+                        )
+                    }
+                }
             }
             composable(AppRoute.Register) {
-                RegisterRoute(onBack = { navController.popBackStack() })
+                AuthPureTheme {
+                    AuthLocaleProvider {
+                        RegisterRoute(onBack = { navController.popBackStack() })
+                    }
+                }
             }
             composable(AppRoute.ForgotPassword) {
-                ForgotPasswordRoute(onBack = { navController.popBackStack() })
+                AuthPureTheme {
+                    AuthLocaleProvider {
+                        ForgotPasswordRoute(onBack = { navController.popBackStack() })
+                    }
+                }
             }
             composable(AppRoute.Home) {
                 HomeRoute(

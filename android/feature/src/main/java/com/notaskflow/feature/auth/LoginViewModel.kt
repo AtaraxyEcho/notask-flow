@@ -1,9 +1,12 @@
 package com.notaskflow.feature.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notaskflow.domain.auth.LoginUseCase
+import com.notaskflow.feature.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +18,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = mutableUiState
@@ -24,11 +28,11 @@ class LoginViewModel @Inject constructor(
     val effect: SharedFlow<LoginEffect> = mutableEffect.asSharedFlow()
 
     fun onAccountChange(value: String) {
-        mutableUiState.update { it.copy(account = value, errorMessage = null) }
+        mutableUiState.update { it.copy(account = value, accountError = null, formError = null) }
     }
 
     fun onPasswordChange(value: String) {
-        mutableUiState.update { it.copy(password = value, errorMessage = null) }
+        mutableUiState.update { it.copy(password = value, passwordError = null, formError = null) }
     }
 
     fun togglePasswordVisibility() {
@@ -41,20 +45,20 @@ class LoginViewModel @Inject constructor(
 
     fun onLoginClick() {
         val state = mutableUiState.value
-        val error = when {
-            state.account.isBlank() -> "请输入账号或邮箱"
-            state.password.length < MIN_PASSWORD_LENGTH -> "密码至少 6 位"
-            else -> null
-        }
-        if (error != null) {
-            mutableUiState.update { it.copy(errorMessage = error, isLoading = false) }
+        // 登录仅做非空预检；密码长度策略只在注册/重置流程生效，避免误拦历史短密码用户
+        val accountError = if (state.account.isBlank()) context.getString(R.string.auth_account_error) else null
+        val passwordError = if (state.password.isBlank()) context.getString(R.string.auth_password_error) else null
+        if (accountError != null || passwordError != null) {
+            mutableUiState.update {
+                it.copy(accountError = accountError, passwordError = passwordError, isLoading = false)
+            }
             return
         }
         if (state.isLoading) {
             return
         }
         viewModelScope.launch {
-            mutableUiState.update { it.copy(isLoading = true, errorMessage = null) }
+            mutableUiState.update { it.copy(isLoading = true, formError = null) }
             loginUseCase(state.account, state.password)
                 .onSuccess {
                     mutableUiState.update { it.copy(isLoading = false) }
@@ -64,14 +68,10 @@ class LoginViewModel @Inject constructor(
                     mutableUiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = throwable.message ?: "登录失败，请稍后重试"
+                            formError = throwable.message ?: context.getString(R.string.auth_login_failed)
                         )
                     }
                 }
         }
-    }
-
-    private companion object {
-        const val MIN_PASSWORD_LENGTH = 6
     }
 }

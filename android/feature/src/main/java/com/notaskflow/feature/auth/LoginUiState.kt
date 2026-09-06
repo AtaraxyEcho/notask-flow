@@ -6,7 +6,9 @@ data class LoginUiState(
     val isPasswordVisible: Boolean = false,
     val rememberMe: Boolean = false,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val accountError: String? = null,
+    val passwordError: String? = null,
+    val formError: String? = null
 )
 
 sealed interface LoginEffect {
