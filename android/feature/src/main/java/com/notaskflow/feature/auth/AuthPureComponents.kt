@@ -409,6 +409,13 @@ internal fun AuthTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     val colors = AuthPureColors
+    // 占位文本与输入文本必须使用同一套字号/行高，否则光标与占位符会错位
+    val inputTextStyle = TextStyle(
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        color = colors.Ink
+    )
+    val focusRequester = remember { FocusRequester() }
     Column(modifier = modifier.fillMaxWidth()) {
         AuthFieldLabel(label = label, required = required, trailing = labelTrailing)
         Spacer(Modifier.height(6.dp))
@@ -422,10 +429,10 @@ internal fun AuthTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
+                .focusRequester(focusRequester)
                 .fillMaxWidth()
-                .heightIn(min = 44.dp)
                 .onFocusChanged { focused = it.isFocused },
-            textStyle = TextStyle(fontSize = 14.sp, color = colors.Ink),
+            textStyle = inputTextStyle,
             cursorBrush = SolidColor(colors.Ink),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
@@ -434,11 +441,13 @@ internal fun AuthTextField(
             decorationBox = { innerTextField ->
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .heightIn(min = 44.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(colors.Surface)
                         .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 12.dp)
+                        .clickable { focusRequester.requestFocus() },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     leadingIcon?.let { icon ->
@@ -454,8 +463,7 @@ internal fun AuthTextField(
                         if (value.isEmpty()) {
                             Text(
                                 text = placeholder,
-                                fontSize = 14.sp,
-                                color = colors.Placeholder,
+                                style = inputTextStyle.copy(color = colors.Placeholder),
                                 maxLines = 1
                             )
                         }
@@ -499,7 +507,6 @@ internal fun AuthOtpRow(
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = 54.dp)
                     .focusRequester(focusRequesters[index])
                     .onFocusChanged { focused = it.isFocused }
                     .onPreviewKeyEvent { event ->
@@ -527,6 +534,7 @@ internal fun AuthOtpRow(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
+                            .heightIn(min = 54.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(colors.Surface)
                             .border(
