@@ -267,4 +267,8 @@ networks:
     driver: bridge
 
 volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
+  minio-data:
   elasticsearch-data:
