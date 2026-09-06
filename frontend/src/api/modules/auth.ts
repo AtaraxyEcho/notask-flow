@@ -17,7 +17,7 @@ export const authService = {
     return http.get<AuthSystemSetting>('/auth/settings')
   },
   login(payload: LoginRequest) {
-    return http.post<LoginResponse>('/auth/login', payload)
+    return http.post<LoginResponse>('/auth/login', payload, { silentError: true })
   },
   sendRegisterEmailCode(payload: SendRegisterEmailCodeRequest) {
     return http.post<void>('/auth/register/send-email-code', payload)
@@ -26,13 +26,13 @@ export const authService = {
     return http.post<UserProfile>('/auth/register', payload)
   },
   forgotPassword(payload: ForgotPasswordRequest) {
-    return http.post<void>('/auth/forgot-password', payload)
+    return http.post<void>('/auth/forgot-password', payload, { silentError: true })
   },
   verifyResetCode(payload: VerifyResetCodeRequest) {
-    return http.post<VerifyResetCodeResponse>('/auth/verify-reset-code', payload)
+    return http.post<VerifyResetCodeResponse>('/auth/verify-reset-code', payload, { silentError: true })
   },
   resetPassword(payload: ResetPasswordRequest) {
-    return http.post<void>('/auth/reset-password', payload)
+    return http.post<void>('/auth/reset-password', payload, { silentError: true })
   },
   refresh() {
     return http.post<LoginResponse>('/auth/refresh')

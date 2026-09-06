@@ -1,0 +1,727 @@
+/*
+ * Auth Pure 设计系统（Rigorous Functional Minimalism）
+ * 规范来源：NotaskFlow Login UI Design/auth_pure/DESIGN.md
+ * 仅作用于认证页（.auth-page 容器内），使用独立 auth- 前缀令牌，不污染主题变量。
+ */
+.auth-page {
+  --auth-canvas: #f8fafc;
+  --auth-surface: #ffffff;
+  --auth-ink: #0f172a;
+  --auth-ink-hover: #1e293b;
+  --auth-ink-active: #334155;
+  --auth-secondary: #334155;
+  --auth-muted: #64748b;
+  --auth-placeholder: #94a3b8;
+  --auth-border: #e2e8f0;
+  --auth-border-hover: #cbd5e1;
+  --auth-disabled-bg: #f1f5f9;
+  --auth-error: #ef4444;
+  --auth-error-surface: #fef2f2;
+  --auth-error-border: #fca5a5;
+  --auth-error-text: #991b1b;
+
+  min-height: 100dvh;
+  background: var(--auth-canvas);
+  color: var(--auth-ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---------- 顶部导航栏 ---------- */
+.auth-topbar {
+  background: var(--auth-surface);
+  border-bottom: 1px solid var(--auth-border);
+}
+
+.auth-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.auth-brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--auth-ink);
+}
+
+.auth-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 语言切换器：规范为无边框文字触发器 */
+.auth-topbar .el-dropdown button {
+  border-radius: 8px;
+  color: var(--auth-muted);
+  font-weight: 500;
+  background: transparent;
+}
+
+.auth-topbar .el-dropdown button:hover {
+  color: var(--auth-ink);
+  background: var(--auth-disabled-bg);
+}
+
+.auth-help-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--auth-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.auth-help-link:hover {
+  color: var(--auth-ink);
+  background: var(--auth-disabled-bg);
+}
+
+.auth-help-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* ---------- 主区域与卡片 ---------- */
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px 0 rgba(15, 23, 42, 0.05),
+    0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  padding: 40px;
+}
+
+.auth-card--wide {
+  max-width: 560px;
+}
+
+/* ---------- 排版 ---------- */
+.auth-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+  color: var(--auth-ink);
+}
+
+.auth-subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--auth-muted);
+}
+
+.auth-code-target {
+  color: var(--auth-ink);
+  font-weight: 500;
+}
+
+/* ---------- 表单 ---------- */
+.auth-form {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-label {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--auth-ink);
+}
+
+.auth-helper {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--auth-muted);
+}
+
+.auth-field-error {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--auth-error);
+}
+
+.auth-field-error .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.auth-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--auth-ink);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input::placeholder {
+  color: var(--auth-placeholder);
+}
+
+.auth-input:hover {
+  border-color: var(--auth-border-hover);
+}
+
+.auth-input:focus {
+  border-color: var(--auth-ink);
+  box-shadow: 0 0 0 1px var(--auth-ink);
+}
+
+.auth-input--error,
+.auth-input--error:hover {
+  border-color: var(--auth-error);
+}
+
+.auth-input--error:focus {
+  border-color: var(--auth-error);
+  box-shadow: 0 0 0 1px var(--auth-error);
+}
+
+.auth-password-wrap {
+  position: relative;
+}
+
+.auth-password-wrap .auth-input {
+  padding-right: 44px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--auth-muted);
+  transition: color 0.15s ease;
+}
+
+.auth-password-toggle:hover {
+  color: var(--auth-ink);
+}
+
+.auth-password-toggle .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* 复选框：16px、4px 圆角、选中填充 #0F172A */
+.auth-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border-hover);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.auth-checkbox:checked {
+  background-color: var(--auth-ink);
+  border-color: var(--auth-ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.auth-checkbox:focus-visible {
+  outline: 2px solid rgba(15, 23, 42, 0.12);
+  outline-offset: 2px;
+}
+
+.auth-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--auth-secondary);
+  cursor: pointer;
+}
+
+.auth-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--auth-ink);
+  transition: color 0.15s ease;
+}
+
+.auth-link:hover {
+  color: var(--auth-ink-hover);
+  text-decoration: underline;
+}
+
+.auth-link--strong {
+  font-weight: 600;
+}
+
+/* ---------- 按钮 ---------- */
+.auth-primary-button {
+  width: 100%;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  background: var(--auth-ink);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.auth-primary-button:hover:not(:disabled) {
+  background: var(--auth-ink-hover);
+}
+
+.auth-primary-button:active:not(:disabled) {
+  background: var(--auth-ink-active);
+}
+
+.auth-primary-button:disabled {
+  background: var(--auth-disabled-bg);
+  border-color: var(--auth-border);
+  color: var(--auth-placeholder);
+  cursor: not-allowed;
+}
+
+.auth-primary-button .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* ---------- 卡内错误横幅 ---------- */
+.auth-error-banner {
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--auth-error-surface);
+  border: 1px solid var(--auth-error-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--auth-error-text);
+}
+
+.auth-error-banner .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--auth-error);
+}
+
+/* ---------- 分隔线与切换链接 ---------- */
+.auth-divider {
+  margin-top: 24px;
+  height: 1px;
+  background: var(--auth-border);
+}
+
+.auth-switch-line {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--auth-secondary);
+}
+
+.auth-switch-line .auth-link {
+  margin-left: 8px;
+}
+
+/* ---------- 页脚 ---------- */
+.auth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 14px 24px;
+  background: var(--auth-surface);
+  border-top: 1px solid var(--auth-border);
+  font-size: 12px;
+  color: var(--auth-muted);
+}
+
+.auth-footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.auth-footer-links a,
+.auth-footer-links button {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--auth-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.auth-footer-links a:hover,
+.auth-footer-links button:hover {
+  color: var(--auth-ink);
+}
+
+/* ---------- 标签行（必填星号 / 右侧提示 / 右侧动作） ---------- */
+.auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.auth-label-row .auth-label {
+  margin-bottom: 0;
+}
+
+.auth-required {
+  margin-left: 2px;
+  color: var(--auth-error);
+}
+
+.auth-label-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--auth-muted);
+}
+
+.auth-field-hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--auth-muted);
+}
+
+/* 文字链接按钮（获取验证码等） */
+.auth-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--auth-ink);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.auth-link-button:hover:not(:disabled) {
+  color: var(--auth-ink-hover);
+  text-decoration: underline;
+}
+
+.auth-link-button:disabled {
+  color: var(--auth-placeholder);
+  cursor: not-allowed;
+}
+
+.auth-link-button .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* ---------- 密码强度条 ---------- */
+.auth-strength-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--auth-muted);
+}
+
+.auth-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.auth-strength-segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--auth-border);
+  transition: background-color 0.15s ease;
+}
+
+.auth-strength--1 .auth-strength-segment--filled {
+  background: #ef4444;
+}
+
+.auth-strength--2 .auth-strength-segment--filled {
+  background: #f59e0b;
+}
+
+.auth-strength--3 .auth-strength-segment--filled {
+  background: #10b981;
+}
+
+.auth-strength--4 .auth-strength-segment--filled {
+  background: #059669;
+}
+
+/* ---------- 六位分离验证码 ---------- */
+.auth-otp-row {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-otp-cell {
+  flex: 1;
+  min-width: 0;
+  max-width: 48px;
+  height: 54px;
+  padding: 0;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--auth-ink);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-otp-cell:focus {
+  border-color: var(--auth-ink);
+  box-shadow: 0 0 0 1px var(--auth-ink);
+}
+
+/* ---------- 成功横幅 ---------- */
+.auth-success-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #065f46;
+}
+
+.auth-success-banner .material-symbols-outlined {
+  font-size: 16px;
+  color: #10b981;
+}
+
+/* 协议勾选行与行内链接 */
+.auth-terms-line {
+  align-items: flex-start;
+}
+
+.auth-inline-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--auth-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.auth-inline-link:hover {
+  color: var(--auth-ink-hover);
+}
+
+/* ---------- 步骤条 ---------- */
+.auth-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.auth-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-step-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--auth-disabled-bg);
+  color: var(--auth-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-step-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--auth-muted);
+}
+
+.auth-step--active .auth-step-dot {
+  background: var(--auth-ink);
+  color: #ffffff;
+}
+
+.auth-step--active .auth-step-label {
+  color: var(--auth-ink);
+}
+
+.auth-steps-line {
+  flex: 1;
+  height: 1px;
+  background: var(--auth-border);
+}
+
+/* ---------- 带尾部图标的输入框 ---------- */
+.auth-input-affix {
+  position: relative;
+}
+
+.auth-input-affix .auth-input {
+  padding-right: 40px;
+}
+
+.auth-input-affix > .material-symbols-outlined {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--auth-muted);
+  pointer-events: none;
+}
+
+/* ---------- 次级按钮 ---------- */
+.auth-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 8px;
+  color: var(--auth-ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.auth-secondary-button:hover {
+  background: var(--auth-canvas);
+  border-color: var(--auth-border-hover);
+  color: var(--auth-ink);
+}
+
+.auth-back-button {
+  margin-top: 24px;
+}
+
+/* 底部切换行内的动作按钮间距 */
+.auth-switch-line .auth-link-button {
+  margin-left: 8px;
+}
+
+/* ---------- 移动端：卡片全幅、与画布融合 ---------- */
+@media (max-width: 639px) {
+  .auth-topbar-inner {
+    padding: 0 16px;
+  }
+
+  .auth-main {
+    padding: 24px 0;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    padding: 24px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page *,
+  .auth-page *::before,
+  .auth-page *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

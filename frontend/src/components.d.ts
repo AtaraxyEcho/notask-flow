@@ -45,7 +45,7 @@ declare module 'vue' {
     FileUploadSettingsDialog: typeof import('./components/files/FileUploadSettingsDialog.vue')['default']
     GlobalSearchDialog: typeof import('./components/common/GlobalSearchDialog.vue')['default']
     LanguageSwitcher: typeof import('./components/common/LanguageSwitcher.vue')['default']
-    LoginWaterBackground: typeof import('./components/shared/LoginWaterBackground.vue')['default']
+    LegalDocumentDialog: typeof import('./components/shared/LegalDocumentDialog.vue')['default']
     NoteFileReferenceDialog: typeof import('./components/notes/NoteFileReferenceDialog.vue')['default']
     NoteHistoryDrawer: typeof import('./components/notes/NoteHistoryDrawer.vue')['default']
     NoteShareDialog: typeof import('./components/notes/NoteShareDialog.vue')['default']

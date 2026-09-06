@@ -1,109 +1,135 @@
 <template>
-  <div class="flex flex-col items-center text-center">
-    <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-sm">
-      <span class="material-symbols-outlined text-[32px]">mark_email_read</span>
+  <div>
+    <div class="auth-steps">
+      <div :class="['auth-step', { 'auth-step--active': !hasSentCode }]">
+        <span class="auth-step-dot">1</span>
+        <span class="auth-step-label">{{ t('auth.stepEmail') }}</span>
+      </div>
+      <div class="auth-steps-line"></div>
+      <div :class="['auth-step', { 'auth-step--active': hasSentCode }]">
+        <span class="auth-step-dot">2</span>
+        <span class="auth-step-label">{{ t('auth.stepCode') }}</span>
+      </div>
     </div>
 
-    <h1 class="font-title-serif text-3xl text-on-surface">
-      {{ hasSentCode ? t('auth.verifyEmailTitle') : t('auth.forgotPasswordTitle') }}
-    </h1>
-
-    <p class="mt-4 max-w-[26rem] text-body-main leading-8 text-on-surface-variant">
+    <h1 class="auth-title">{{ hasSentCode ? t('auth.verifyEmailTitle') : t('auth.forgotPasswordTitle') }}</h1>
+    <p class="auth-subtitle">
       <template v-if="hasSentCode">
-        {{ t('auth.codeSentPrefix') }} <span class="font-medium text-on-surface">{{ email }}</span
-        >{{ t('auth.codeSentSuffix') }}
+        {{ t('auth.codeSentPrefix') }}<span class="auth-code-target">{{ email }}</span>{{ t('auth.codeSentSuffix') }}
       </template>
       <template v-else>
         {{ t('auth.forgotPasswordDescription') }}
       </template>
     </p>
 
-    <form class="mt-8 w-full space-y-8" @submit.prevent="handlePrimaryAction">
-      <label v-if="!hasSentCode" class="block text-left">
-        <span class="mb-2 block text-label-bold text-on-surface">{{ t('auth.emailAddress') }}</span>
-        <input
-          v-model="email"
-          type="email"
-          class="app-input w-full px-4 py-3.5"
-          placeholder="you@example.com"
-        />
-      </label>
+    <div v-if="formError" class="auth-error-banner" role="alert">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ formError }}</span>
+    </div>
 
-      <div v-else class="space-y-6">
-        <div class="rounded-[1.2rem] bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-          {{ t('auth.codeValidTip') }}
+    <form class="auth-form" novalidate @submit.prevent="handlePrimaryAction">
+      <template v-if="!hasSentCode">
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label class="auth-label" for="forgot-email">{{ t('auth.emailAddress') }}<span class="auth-required">*</span></label>
+          </div>
+          <div class="auth-input-affix">
+            <input
+              id="forgot-email"
+              v-model="email"
+              class="auth-input"
+              type="email"
+              name="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              @input="fieldError = ''"
+            />
+            <span class="material-symbols-outlined">mail</span>
+          </div>
+          <p v-if="fieldError" class="auth-field-error">
+            <span class="material-symbols-outlined">warning</span>
+            <span>{{ fieldError }}</span>
+          </p>
         </div>
 
-        <div class="flex justify-between gap-2 sm:gap-3" @paste.prevent="handlePaste">
-          <input
-            v-for="(digit, index) in codeDigits"
-            :key="index"
-            :ref="(element) => setCodeInputRef(element as HTMLInputElement | null, index)"
-            :value="digit"
-            :aria-label="`Digit ${index + 1}`"
-            class="h-14 w-11 rounded-xl border border-outline-variant bg-surface-container-low text-center font-title-serif text-2xl text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary sm:w-12"
-            inputmode="numeric"
-            maxlength="1"
-            type="text"
-            @input="handleDigitInput(index, $event)"
-            @keydown="handleDigitKeydown(index, $event)"
-          />
-        </div>
-      </div>
+        <button class="auth-primary-button" type="submit" :disabled="primaryLoading">
+          <span v-if="primaryLoading" class="material-symbols-outlined animate-spin">progress_activity</span>
+          <span>{{ primaryLoading ? '' : t('auth.sendCode') }}</span>
+        </button>
+      </template>
 
-      <button class="app-primary-button w-full justify-center gap-2 py-3.5" type="submit" :disabled="primaryLoading">
-        <span v-if="primaryLoading" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
-        <template v-else>
-          {{ hasSentCode ? t('auth.verify') : t('auth.sendCode') }}
-          <span v-if="hasSentCode" class="material-symbols-outlined text-[18px]">arrow_forward</span>
-        </template>
-      </button>
+      <template v-else>
+        <p class="auth-field-hint">{{ t('auth.codeValidTip') }}</p>
+
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <span class="auth-label">{{ t('auth.emailCode') }}<span class="auth-required">*</span></span>
+          </div>
+          <div class="auth-otp-row" @paste.prevent="handlePaste">
+            <input
+              v-for="(digit, index) in codeDigits"
+              :key="index"
+              :ref="(element) => setCodeInputRef(element as HTMLInputElement | null, index)"
+              :value="digit"
+              class="auth-otp-cell"
+              type="text"
+              inputmode="numeric"
+              maxlength="1"
+              :aria-label="`Digit ${index + 1}`"
+              @input="handleDigitInput(index, $event)"
+              @keydown="handleDigitKeydown(index, $event)"
+            />
+          </div>
+          <p v-if="fieldError" class="auth-field-error">
+            <span class="material-symbols-outlined">warning</span>
+            <span>{{ fieldError }}</span>
+          </p>
+        </div>
+
+        <button class="auth-primary-button" type="submit" :disabled="primaryLoading">
+          <span v-if="primaryLoading" class="material-symbols-outlined animate-spin">progress_activity</span>
+          <template v-else>
+            <span>{{ t('auth.verify') }}</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </template>
+        </button>
+      </template>
     </form>
 
-    <div class="mt-8 text-center text-body-secondary text-on-surface-variant">
+    <div class="auth-divider" role="separator"></div>
+
+    <p class="auth-switch-line">
       <template v-if="hasSentCode">
-        {{ t('auth.noCode') }}
+        <span>{{ t('auth.noCode') }}</span>
         <button
-          class="ml-1 font-semibold text-primary transition-colors hover:text-primary-container disabled:cursor-not-allowed disabled:text-on-surface-variant"
+          class="auth-link-button"
           type="button"
           :disabled="resendCountdown > 0 || resendLoading"
           @click="resendCode"
         >
           {{ resendCountdown > 0 ? t('auth.resendIn', { seconds: resendCountdown }) : t('auth.resendCode') }}
         </button>
-        <button
-          class="ml-3 text-on-surface-variant transition-colors hover:text-primary"
-          type="button"
-          @click="editEmail"
-        >
+        <button class="auth-link-button" type="button" @click="editEmail">
           {{ t('auth.editEmail') }}
         </button>
       </template>
       <template v-else>
-        {{ t('auth.rememberPassword') }}
-        <RouterLink class="ml-1 font-semibold text-primary hover:text-primary-container" to="/login">
-          {{ t('auth.backToLogin') }}
-        </RouterLink>
+        <span>{{ t('auth.rememberPassword') }}</span>
+        <RouterLink class="auth-link auth-link--strong" to="/login">{{ t('auth.backToLogin') }}</RouterLink>
       </template>
-    </div>
-
-    <div class="mt-8 w-full border-t border-outline-variant/20 pt-6">
-      <div class="flex items-center justify-center gap-2 text-caption text-on-surface-variant">
-        <span class="material-symbols-outlined text-[16px]">lock</span>
-        <span>{{ t('auth.secureVerification') }}</span>
-      </div>
-    </div>
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { isAxiosError } from 'axios'
+import { nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from '@/i18n'
 import { useUserStore } from '@/stores/user'
 
 const CODE_LENGTH = 6
-const RESEND_INTERVAL_SECONDS = 60
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -114,12 +140,23 @@ const hasSentCode = ref(false)
 const primaryLoading = ref(false)
 const resendLoading = ref(false)
 const resendCountdown = ref(0)
+const formError = ref('')
+const fieldError = ref('')
 const codeDigits = ref(createEmptyDigits())
-const codeInputRefs = ref<Array<HTMLInputElement | null>>(createEmptyDigits().map(() => null))
+const codeInputRefs = ref<Array<HTMLInputElement | null>>(Array.from({ length: CODE_LENGTH }, () => null))
 
 let resendTimer: number | undefined
 
-const codeValue = computed(() => codeDigits.value.join(''))
+const codeValue = () => codeDigits.value.join('')
+
+// 拦截器把后端业务错误包装为 Error(message)，可直接展示；
+// 网络中断或非后端响应的 AxiosError 无服务端消息，需回退本地化文案
+const resolveErrorMessage = (error: unknown) => {
+  if (isAxiosError(error)) {
+    return error.response?.data?.message || t('messages.requestFailed')
+  }
+  return error instanceof Error && error.message ? error.message : t('messages.requestFailed')
+}
 
 function createEmptyDigits() {
   return Array.from({ length: CODE_LENGTH }, () => '')
@@ -134,7 +171,7 @@ const clearResendTimer = () => {
 
 const startResendCountdown = () => {
   clearResendTimer()
-  resendCountdown.value = RESEND_INTERVAL_SECONDS
+  resendCountdown.value = 60
   resendTimer = window.setInterval(() => {
     if (resendCountdown.value <= 1) {
       clearResendTimer()
@@ -160,14 +197,6 @@ const setCodeInputRef = (element: Element | null, index: number) => {
   codeInputRefs.value[index] = element as HTMLInputElement | null
 }
 
-const sendCode = async () => {
-  await userStore.forgotPassword({ email: email.value.trim() })
-  hasSentCode.value = true
-  resetCodeInputs()
-  startResendCountdown()
-  focusCodeInput(0)
-}
-
 const fillDigits = (digits: string, startIndex = 0) => {
   const normalized = digits.replace(/\D/g, '')
   if (!normalized) {
@@ -186,6 +215,7 @@ const fillDigits = (digits: string, startIndex = 0) => {
 }
 
 const handleDigitInput = (index: number, event: Event) => {
+  fieldError.value = ''
   const target = event.target as HTMLInputElement
   const normalized = target.value.replace(/\D/g, '')
   if (!normalized) {
@@ -228,16 +258,41 @@ const handlePaste = (event: ClipboardEvent) => {
 }
 
 const handlePrimaryAction = async () => {
-  primaryLoading.value = true
-  try {
-    if (!hasSentCode.value) {
-      await sendCode()
+  formError.value = ''
+
+  if (!hasSentCode.value) {
+    const normalizedEmail = email.value.trim().toLowerCase()
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
+      fieldError.value = t('auth.validEmail')
       return
     }
 
+    primaryLoading.value = true
+    try {
+      await userStore.forgotPassword({ email: normalizedEmail })
+      email.value = normalizedEmail
+      hasSentCode.value = true
+      resetCodeInputs()
+      startResendCountdown()
+      focusCodeInput(0)
+    } catch (error) {
+      formError.value = resolveErrorMessage(error)
+    } finally {
+      primaryLoading.value = false
+    }
+    return
+  }
+
+  if (!/^\d{6}$/.test(codeValue())) {
+    fieldError.value = t('auth.validEmailCode')
+    return
+  }
+
+  primaryLoading.value = true
+  try {
     const response = await userStore.verifyResetCode({
       email: email.value.trim(),
-      code: codeValue.value,
+      code: codeValue(),
     })
     await router.push({
       path: '/reset-password',
@@ -245,6 +300,8 @@ const handlePrimaryAction = async () => {
         resetToken: response.resetToken,
       },
     })
+  } catch (error) {
+    formError.value = resolveErrorMessage(error)
   } finally {
     primaryLoading.value = false
   }
@@ -252,8 +309,14 @@ const handlePrimaryAction = async () => {
 
 const resendCode = async () => {
   resendLoading.value = true
+  formError.value = ''
   try {
-    await sendCode()
+    await userStore.forgotPassword({ email: email.value.trim() })
+    resetCodeInputs()
+    startResendCountdown()
+    focusCodeInput(0)
+  } catch (error) {
+    formError.value = resolveErrorMessage(error)
   } finally {
     resendLoading.value = false
   }
@@ -261,6 +324,7 @@ const resendCode = async () => {
 
 const editEmail = () => {
   hasSentCode.value = false
+  fieldError.value = ''
   resetCodeInputs()
   clearResendTimer()
   resendCountdown.value = 0

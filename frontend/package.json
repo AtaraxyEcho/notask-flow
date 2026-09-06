@@ -38,7 +38,6 @@
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.0",
     "pinia-plugin-persistedstate": "^4.0.1",
-    "three": "^0.184.0",
     "uuid": "^14.0.0",
     "vue": "^3.4.38",
     "vue-demi": "^0.14.10",

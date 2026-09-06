@@ -3,6 +3,7 @@
 @import './themes/personal-forest.css';
 @import './themes/personal-ocean.css';
 @import './themes/team.css';
+@import './auth.css';
 
 @tailwind base;
 @tailwind components;
