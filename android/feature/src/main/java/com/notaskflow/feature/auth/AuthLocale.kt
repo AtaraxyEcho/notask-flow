@@ -95,7 +95,7 @@ internal fun AuthLanguageToggle() {
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
     ) {
         Text(
-            text = if (AuthLocaleController.tag == AuthLocaleController.CHINESE) "EN" else "中文",
+            text = if (AuthLocaleController.tag == AuthLocaleController.CHINESE) "中文" else "EN",
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
         )

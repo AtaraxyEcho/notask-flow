@@ -71,6 +71,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -209,7 +211,9 @@ internal fun AuthPureScaffold(
 private fun AuthPureTopBar(onBack: (() -> Unit)?) {
     val colors = AuthPureColors
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (onBack != null) {
@@ -806,42 +810,62 @@ internal fun AuthLinkLine(
     links: List<AuthLink>,
     modifier: Modifier = Modifier
 ) {
-    Text(
-        modifier = modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.bodyMedium.copy(color = AuthPureColors.Secondary),
-        text = buildAnnotatedString {
-            append(prefix)
-            append(" ")
-            links.forEach { link ->
-                if (link.onClick != null) {
-                    withLink(
-                        LinkAnnotation.Clickable(
-                            tag = link.label,
-                            styles = TextLinkStyles(
-                                style = SpanStyle(
-                                    color = AuthPureColors.Ink,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            ),
-                            linkInteractionListener = { link.onClick?.invoke() }
-                        )
-                    ) {
-                        append(link.label)
-                    }
-                } else {
-                    withStyle(
-                        SpanStyle(
-                            color = if (link.muted) AuthPureColors.Placeholder else AuthPureColors.Secondary
-                        )
-                    ) {
-                        append(link.label)
-                    }
+    val annotated = buildAnnotatedString {
+        append(prefix)
+        append(" ")
+        links.forEach { link ->
+            if (link.onClick != null) {
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = link.label,
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                color = AuthPureColors.Ink,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        ),
+                        linkInteractionListener = { link.onClick?.invoke() }
+                    )
+                ) {
+                    append(link.label)
                 }
-                append(" ")
+            } else {
+                withStyle(
+                    SpanStyle(
+                        color = if (link.muted) AuthPureColors.Placeholder else AuthPureColors.Secondary
+                    )
+                ) {
+                    append(link.label)
+                }
             }
+            append(" ")
         }
-    )
+    }
+    // 自适应：可用宽度不足时按 1sp 步进缩小字号，保证前缀与链接始终同一行
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val density = LocalDensity.current
+        val measurer = rememberTextMeasurer()
+        val maxPx = with(density) { maxWidth.toPx() }
+        var fontSize = 14.sp
+        var style = MaterialTheme.typography.bodyMedium
+            .copy(color = AuthPureColors.Secondary, fontSize = fontSize)
+        while (fontSize.value > 10f) {
+            val measured = measurer.measure(annotated, style, maxLines = 1).size.width
+            if (measured <= maxPx) {
+                break
+            }
+            fontSize = (fontSize.value - 1).sp
+            style = style.copy(fontSize = fontSize)
+        }
+        Text(
+            text = annotated,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            style = style
+        )
+    }
 }
 
 @Composable
