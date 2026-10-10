@@ -1,4 +1,8 @@
-# Notask Flow
+<h1 align="center">
+  <br>
+  <img src="frontend/public/logo-horizontal.png" alt="Notask Flow" width="460">
+  <br>
+</h1>
 
 > 个人知识管理与团队任务协作平台
 

@@ -1,4 +1,8 @@
-# Notask Flow
+<h1 align="center">
+  <br>
+  <img src="frontend/public/logo-horizontal.png" alt="Notask Flow" width="460">
+  <br>
+</h1>
 
 > Personal Knowledge Management & Team Task Collaboration Platform
 
