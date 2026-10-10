@@ -3,8 +3,7 @@
     <header class="auth-topbar">
       <div class="auth-topbar-inner">
         <RouterLink class="auth-brand" to="/login">
-          <img src="/logo.svg" alt="Notask Flow" class="auth-brand-logo" />
-          <span class="auth-brand-name">Notask Flow</span>
+          <img src="/logo-horizontal-ui.webp" alt="Notask Flow" class="auth-brand-logo" />
         </RouterLink>
         <div class="auth-topbar-actions">
           <LanguageSwitcher />

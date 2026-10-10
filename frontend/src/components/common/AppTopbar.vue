@@ -4,9 +4,8 @@
     class="fixed top-0 z-40 flex h-16 w-full items-center justify-between border-b border-outline-variant/40 bg-surface/90 px-6 shadow-sm backdrop-blur-xl"
   >
     <div class="flex items-center gap-8">
-      <RouterLink class="flex items-center gap-2 font-title-serif text-xl font-bold text-primary" to="/app/notes">
-        <img src="/logo.svg" alt="Notask Flow" class="h-10 w-10 rounded-2xl object-cover shadow-md" />
-        <span>Notask Flow</span>
+      <RouterLink class="flex items-center" to="/app/notes">
+        <img src="/logo-horizontal-ui.webp" alt="Notask Flow" class="h-11 w-auto rounded-xl shadow-sm" />
       </RouterLink>
       <button
         class="hidden w-64 items-center rounded-full border border-outline-variant/30 bg-surface-container-low px-4 py-2 md:flex"
@@ -68,9 +67,8 @@
     class="fixed top-0 z-40 flex h-16 w-full items-center justify-between border-b border-white/20 bg-white/50 px-10 shadow-[0_20px_40px_rgba(0,119,182,0.05)] backdrop-blur-2xl"
   >
     <div class="flex items-center gap-6">
-      <RouterLink class="flex items-center gap-2 font-title-serif text-2xl font-bold text-[#0077B6]" to="/app/projects">
-        <img src="/logo.svg" alt="Notask Flow" class="h-10 w-10 rounded-2xl object-cover shadow-md" />
-        <span>Notask Flow Team</span>
+      <RouterLink class="flex items-center" to="/app/projects">
+        <img src="/logo-horizontal-ui.webp" alt="Notask Flow Team" class="h-11 w-auto rounded-xl shadow-sm" />
       </RouterLink>
       <button
         class="hidden items-center rounded-full border border-white/30 bg-white/50 px-4 py-2 md:flex"
