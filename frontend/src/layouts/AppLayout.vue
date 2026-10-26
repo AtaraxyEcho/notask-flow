@@ -5,6 +5,18 @@
     <PersonalSidebar v-if="spaceStore.currentSpace?.type !== 'TEAM'" />
     <TeamSidebar v-else />
 
+    <el-drawer
+      v-model="mobileNavOpen"
+      direction="ltr"
+      size="264px"
+      :with-header="false"
+      class="mobile-nav-drawer"
+      :z-index="60"
+    >
+      <PersonalSidebar v-if="spaceStore.currentSpace?.type !== 'TEAM'" />
+      <TeamSidebar v-else />
+    </el-drawer>
+
     <main
       class="min-h-screen pt-16 transition-all"
       :class="spaceStore.currentSpace?.type === 'TEAM' ? 'md:ml-72 team-main-shell' : 'md:ml-64'"
@@ -46,7 +58,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import AppTopbar from '@/components/common/AppTopbar.vue'
 import PersonalSidebar from '@/components/personal/PersonalSidebar.vue'
 import TeamSidebar from '@/components/team/TeamSidebar.vue'
@@ -54,12 +67,39 @@ import { useSpaceRealtimeEvents } from '@/composables/useSpaceRealtimeEvents'
 import { useI18n } from '@/i18n'
 import { prefetchAppRouteComponents } from '@/router'
 import { useSpaceStore } from '@/stores/space'
+import { useUiStore } from '@/stores/ui'
 
+const route = useRoute()
 const spaceStore = useSpaceStore()
+const uiStore = useUiStore()
 const { t } = useI18n()
 useSpaceRealtimeEvents()
 
+const mobileNavOpen = computed({
+  get: () => uiStore.mobileNavOpen,
+  set: (value: boolean) => uiStore.setMobileNavOpen(value),
+})
+
+watch(
+  () => route.fullPath,
+  () => uiStore.setMobileNavOpen(false),
+)
+
+/**
+ * 处理全局快捷键：Ctrl/Command + K 打开全局搜索。
+ *
+ * @param event 键盘事件
+ */
+const handleGlobalShortcut = (event: KeyboardEvent) => {
+  if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') {
+    return
+  }
+  event.preventDefault()
+  uiStore.setGlobalSearchOpen(true)
+}
+
 onMounted(() => {
+  window.addEventListener('keydown', handleGlobalShortcut)
   const schedulePrefetch =
     window.requestIdleCallback ||
     ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 600))
@@ -68,7 +108,28 @@ onMounted(() => {
     prefetchAppRouteComponents()
   })
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalShortcut)
+})
 </script>
+
+<style>
+.mobile-nav-drawer .el-drawer__body {
+  overflow: hidden;
+  padding: 0;
+}
+
+.mobile-nav-drawer aside {
+  position: static !important;
+  display: flex !important;
+  width: 100% !important;
+  height: 100vh !important;
+  inset: auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+</style>
 
 <style scoped>
 .space-switch-fade-enter-active,

@@ -13,6 +13,7 @@ import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.service.AdminLogService;
 import com.notaskflow.service.AdminAuthService;
 import com.notaskflow.service.LoginSessionService;
+import com.notaskflow.utils.ConstantTimeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -95,7 +96,8 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         if (configuredPassword != null && configuredPassword.startsWith(BCRYPT_PREFIX)) {
             return passwordEncoder.matches(rawPassword, configuredPassword);
         }
-        return configuredPassword != null && configuredPassword.equals(rawPassword);
+        log.warn("管理端正在使用明文回退口令，请在配置中使用 BCrypt 哈希值");
+        return configuredPassword != null && ConstantTimeUtils.equals(configuredPassword, rawPassword);
     }
 
     private String adminLoginId() {

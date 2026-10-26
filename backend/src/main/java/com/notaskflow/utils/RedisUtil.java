@@ -40,6 +40,23 @@ public class RedisUtil {
     private static final RedisScript<Long> RELEASE_LOCK_SCRIPT =
             new DefaultRedisScript<>(RELEASE_LOCK_SCRIPT_TEXT, Long.class);
 
+    private static final String TAKE_COUNTER_SCRIPT_TEXT = """
+            local value = redis.call('get', KEYS[1])
+            if not value then
+                return 0
+            end
+            local count = tonumber(value)
+            if not count or count <= 0 then
+                redis.call('del', KEYS[1])
+                return 0
+            end
+            redis.call('set', KEYS[1], '0')
+            return count
+            """;
+
+    private static final RedisScript<Long> TAKE_COUNTER_SCRIPT =
+            new DefaultRedisScript<>(TAKE_COUNTER_SCRIPT_TEXT, Long.class);
+
     private final RedisTemplate<Object, Object> redisTemplate;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -195,6 +212,20 @@ public class RedisUtil {
             return number.longValue();
         }
         return parseCounter(String.valueOf(value));
+    }
+
+    /**
+     * 原子读取并清零计数值。
+     *
+     * <p>使用 Lua 脚本在 Redis 单线程内完成「读取 + 清零」，避免 {@code DECRBY} 与 {@code DEL}
+     * 之间被并发 {@code INCR} 插入导致计数被误删。</p>
+     *
+     * @param key 缓存键
+     * @return 本次取出并清零的计数值，不存在或非正数时返回 0
+     */
+    public long takeCounter(String key) {
+        Long taken = stringRedisTemplate.execute(TAKE_COUNTER_SCRIPT, Collections.singletonList(key));
+        return taken == null ? 0L : taken;
     }
 
     /**
@@ -360,6 +391,21 @@ public class RedisUtil {
         if (current != null && current > maxAttempts) {
             throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, message);
         }
+    }
+
+    /**
+     * 记录一次失败并返回累计失败次数。
+     *
+     * @param key 计数键
+     * @param window 统计窗口，首次计数时设置
+     * @return 累计失败次数
+     */
+    public long recordFailure(String key, Duration window) {
+        Long current = stringRedisTemplate.opsForValue().increment(key);
+        if (current != null && current == 1L) {
+            stringRedisTemplate.expire(key, window);
+        }
+        return current == null ? 0L : current;
     }
 //    public void limit(String key, int maxAttempts, Duration window, String message) {
 //        log.info("限流key: {}", key);

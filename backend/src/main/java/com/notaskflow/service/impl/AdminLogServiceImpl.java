@@ -17,6 +17,7 @@ import com.notaskflow.mapper.AdminOperationLogMapper;
 import com.notaskflow.mapper.LoginLogMapper;
 import com.notaskflow.service.AdminLogService;
 import com.notaskflow.service.EventFailLogService;
+import com.notaskflow.utils.SqlLikeUtils;
 import com.notaskflow.utils.RequestClientUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -116,9 +117,9 @@ public class AdminLogServiceImpl implements AdminLogService {
         LambdaQueryWrapper<LoginLog> wrapper = Wrappers.<LoginLog>lambdaQuery()
                 .eq(query.getSuccess() != null, LoginLog::getSuccess, query.getSuccess())
                 .and(StringUtils.hasText(query.getKeyword()), nested -> nested
-                        .like(LoginLog::getAccount, query.getKeyword())
+                        .like(LoginLog::getAccount, SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(LoginLog::getIpAddress, query.getKeyword()))
+                        .like(LoginLog::getIpAddress, SqlLikeUtils.escape(query.getKeyword())))
                 .orderByDesc(LoginLog::getGmtCreate);
         Page<LoginLog> result = loginLogMapper.selectPage(page, wrapper);
         List<AdminLoginLogVO> list = result.getRecords().stream()
@@ -139,11 +140,11 @@ public class AdminLogServiceImpl implements AdminLogService {
         LambdaQueryWrapper<AdminOperationLog> wrapper = Wrappers.<AdminOperationLog>lambdaQuery()
                 .eq(query.getSuccess() != null, AdminOperationLog::getSuccess, query.getSuccess())
                 .and(StringUtils.hasText(query.getKeyword()), nested -> nested
-                        .like(AdminOperationLog::getOperator, query.getKeyword())
+                        .like(AdminOperationLog::getOperator, SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(AdminOperationLog::getPath, query.getKeyword())
+                        .like(AdminOperationLog::getPath, SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(AdminOperationLog::getOperationName, query.getKeyword()))
+                        .like(AdminOperationLog::getOperationName, SqlLikeUtils.escape(query.getKeyword())))
                 .orderByDesc(AdminOperationLog::getGmtCreate);
         Page<AdminOperationLog> result = adminOperationLogMapper.selectPage(page, wrapper);
         List<AdminOperationLogVO> list = result.getRecords().stream()

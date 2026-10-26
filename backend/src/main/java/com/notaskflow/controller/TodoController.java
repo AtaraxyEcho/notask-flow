@@ -5,6 +5,7 @@ import com.notaskflow.common.ApiResponse;
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.domain.dto.request.TodoSaveRequest;
 import com.notaskflow.domain.query.TodoQuery;
+import com.notaskflow.domain.vo.TodoCountsVO;
 import com.notaskflow.domain.vo.TodoVO;
 import com.notaskflow.service.TodoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,6 +50,19 @@ public class TodoController {
     public ApiResponse<PageResponse<TodoVO>> page(@PathVariable Long spaceId,
                                                   @Valid @ModelAttribute TodoQuery query) {
         return ApiResponse.success(todoService.page(spaceId, query));
+    }
+
+    /**
+     * 统计待办数量。
+     *
+     * @param spaceId 空间标识
+     * @return 待办数量统计
+     */
+    @SaCheckPermission("space:todo:view")
+    @Operation(summary = "统计待办数量")
+    @GetMapping("/counts")
+    public ApiResponse<TodoCountsVO> counts(@PathVariable Long spaceId) {
+        return ApiResponse.success(todoService.counts(spaceId));
     }
 
     /**

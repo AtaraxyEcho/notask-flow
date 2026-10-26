@@ -303,15 +303,28 @@ public class StatsServiceImpl implements StatsService {
     }
 
     /**
-     * 查询当前用户的个人空间。
+     * 查询当前用户所属的个人空间。
+     *
+     * <p>个人空间的判定条件为空间类型为 PERSONAL 且用户是该空间成员，
+     * 避免仅按所有者过滤导致团队空间下的个人统计口径漂移。</p>
      *
      * @return 个人空间实体
      */
     private Space findCurrentPersonalSpace() {
         Long currentUserId = LoginUserUtil.currentUserId();
+        List<Long> memberSpaceIds = spaceMemberMapper.selectList(Wrappers.<SpaceMember>lambdaQuery()
+                        .select(SpaceMember::getSpaceId)
+                        .eq(SpaceMember::getUserId, currentUserId))
+                .stream()
+                .map(SpaceMember::getSpaceId)
+                .toList();
+        if (memberSpaceIds.isEmpty()) {
+            return null;
+        }
         return spaceMapper.selectOne(Wrappers.<Space>lambdaQuery()
-                .eq(Space::getOwnerUserId, currentUserId)
-                .eq(Space::getType, SpaceType.PERSONAL));
+                .in(Space::getId, memberSpaceIds)
+                .eq(Space::getType, SpaceType.PERSONAL)
+                .last("LIMIT 1"));
     }
 
     /**

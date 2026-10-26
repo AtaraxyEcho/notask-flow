@@ -5,6 +5,11 @@ export const todoService = {
   page(spaceId: number, query: TodoQuery) {
     return http.get<PageResponse<Todo>>(`/spaces/${spaceId}/todos`, { params: query })
   },
+  counts(spaceId: number) {
+    return http.get<{ totalCount: number; pendingCount: number; completedCount: number }>(
+      `/spaces/${spaceId}/todos/counts`,
+    )
+  },
   create(spaceId: number, payload: { title: string; deadline?: string }) {
     return http.post<Todo>(`/spaces/${spaceId}/todos`, payload)
   },

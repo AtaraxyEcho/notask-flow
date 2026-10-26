@@ -311,6 +311,29 @@ export class NoteCollabProvider {
     this.socket.send(payload)
   }
 
+  /**
+   * 向协作服务发送当前文档内容快照。
+   *
+   * 协同服务会暂存该快照，在房间销毁前作为兜底持久化来源，防止客户端崩溃导致内容丢失。
+   *
+   * @param content 纯文本正文
+   * @param contentHtml 富文本 HTML
+   */
+  public sendContentSnapshot(content: string, contentHtml: string) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN || !this.isReady) {
+      return
+    }
+
+    this.socket.send(
+      JSON.stringify({
+        type: 'content-snapshot',
+        content,
+        contentHtml,
+        savedAt: Date.now(),
+      }),
+    )
+  }
+
   private sendSyncStepOne() {
     const encoder = encoding.createEncoder()
     encoding.writeVarUint(encoder, MESSAGE_SYNC)

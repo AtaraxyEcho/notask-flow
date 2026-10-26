@@ -32,6 +32,8 @@ public class NoteHistory {
 
     private String content;
 
+    private String contentHtml;
+
     private Integer version;
 
     private String changeSummary;

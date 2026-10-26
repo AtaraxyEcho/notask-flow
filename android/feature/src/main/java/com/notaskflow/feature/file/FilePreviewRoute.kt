@@ -1,5 +1,6 @@
 package com.notaskflow.feature.file
 
+import com.notaskflow.feature.R
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -12,6 +13,7 @@ import android.webkit.WebView
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +21,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -56,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,9 +98,15 @@ fun FilePreviewRoute(
     }
 
     LaunchedEffect(uiState) {
-        val downloadUrl = (uiState as? FilePreviewUiState.Content)?.file?.downloadUrl
+        val content = uiState as? FilePreviewUiState.Content
+        val downloadUrl = content?.file?.downloadUrl
         if (!downloadUrl.isNullOrBlank()) {
-            openDownloadUrl(context, downloadUrl)
+            openDownloadFile(
+                context = context,
+                file = content.file,
+                url = downloadUrl,
+                authToken = content.authToken
+            )
             viewModel.consumeDownloadUrl()
         }
     }
@@ -218,7 +230,7 @@ private sealed interface ImageRenderState {
 
 private sealed interface PdfRenderState {
     data object Loading : PdfRenderState
-    data class Rendered(val bitmap: Bitmap) : PdfRenderState
+    data class Rendered(val pages: List<Bitmap>) : PdfRenderState
     data class Error(val message: String) : PdfRenderState
 }
 
@@ -267,25 +279,37 @@ private fun PdfPreview(url: String?, authToken: String?) {
     }
     val context = LocalContext.current
     val renderState by produceState<PdfRenderState>(initialValue = PdfRenderState.Loading, key1 = url, key2 = authToken) {
-        value = renderPdfFirstPage(context = context, url = url, authToken = authToken)
+        value = renderPdfPages(context = context, url = url, authToken = authToken)
     }
     when (val state = renderState) {
         PdfRenderState.Loading -> PreviewLoading()
         is PdfRenderState.Error -> PreviewError(message = state.message)
         is PdfRenderState.Rendered -> {
-            Box(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .padding(12.dp),
-                contentAlignment = Alignment.TopCenter
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Image(
-                    bitmap = state.bitmap.asImageBitmap(),
-                    contentDescription = "PDF 第一页预览",
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth
-                )
+                itemsIndexed(state.pages) { index, page ->
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Image(
+                            bitmap = page.asImageBitmap(),
+                            contentDescription = "PDF 第 ${index + 1} 页，共 ${state.pages.size} 页",
+                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth
+                        )
+                        Text(
+                            text = "${index + 1} / ${state.pages.size}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(top = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -356,7 +380,7 @@ private fun LinkPreview(file: ManagedFile, url: String?, authToken: String?) {
             },
             enabled = !url.isNullOrBlank()
         ) {
-            Text("打开文件")
+            Text(stringResource(R.string.file_open_file))
         }
     }
 }
@@ -370,7 +394,7 @@ private fun FileMoveDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("移动“${file.displayName}”") },
+        title = { Text(stringResource(R.string.file_move_title, file.displayName)) },
         text = {
             Column {
                 Text(
@@ -380,13 +404,13 @@ private fun FileMoveDialog(
                 )
                 Spacer(Modifier.height(8.dp))
                 TextButton(onClick = { onMove(null) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("移动到全部文件")
+                    Text(stringResource(R.string.file_move_to_all))
                 }
                 folders.flattenFolders().forEach { folder ->
                     TextButton(onClick = { onMove(folder.id) }, modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Spacer(Modifier.width((folder.depthIn(folders) * 14).dp))
-                            Text("移动到 ${folder.name}")
+                            Text(stringResource(R.string.common_move_to_folder, folder.name))
                         }
                     }
                 }
@@ -395,7 +419,7 @@ private fun FileMoveDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -416,7 +440,15 @@ private suspend fun loadImageBitmap(url: String, authToken: String?): ImageRende
     }
 }
 
-private suspend fun renderPdfFirstPage(context: Context, url: String, authToken: String?): PdfRenderState {
+/**
+ * 渲染 PDF 全部页面。
+ *
+ * @param context 上下文
+ * @param url PDF 下载地址
+ * @param authToken 鉴权令牌
+ * @return PDF 渲染状态
+ */
+private suspend fun renderPdfPages(context: Context, url: String, authToken: String?): PdfRenderState {
     return withContext(Dispatchers.IO) {
         runCatching {
             val file = File(context.cacheDir, "notask-preview-${url.hashCode()}.pdf")
@@ -432,14 +464,17 @@ private suspend fun renderPdfFirstPage(context: Context, url: String, authToken:
                     if (renderer.pageCount == 0) {
                         return@runCatching PdfRenderState.Error("PDF 暂无可预览页面")
                     }
-                    renderer.openPage(0).use { page ->
-                        val width = page.width.coerceAtLeast(MIN_PDF_PAGE_WIDTH)
-                        val height = page.height.coerceAtLeast(MIN_PDF_PAGE_HEIGHT)
-                        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                        bitmap.eraseColor(AndroidColor.WHITE)
-                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        PdfRenderState.Rendered(bitmap)
+                    val pages = (0 until renderer.pageCount).map { index ->
+                        renderer.openPage(index).use { page ->
+                            val width = page.width.coerceAtLeast(MIN_PDF_PAGE_WIDTH)
+                            val height = page.height.coerceAtLeast(MIN_PDF_PAGE_HEIGHT)
+                            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                            bitmap.eraseColor(AndroidColor.WHITE)
+                            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                            bitmap
+                        }
                     }
+                    PdfRenderState.Rendered(pages)
                 }
             }
         }.getOrElse { throwable ->
@@ -505,14 +540,34 @@ private fun openAuthorizedConnection(url: String, authToken: String?): HttpURLCo
     return connection
 }
 
-private fun openDownloadUrl(context: Context, url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url.toAbsoluteUrl()))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    runCatching {
-        context.startActivity(intent)
-    }.onFailure {
-        Toast.makeText(context, "无法打开下载链接", Toast.LENGTH_SHORT).show()
+/**
+ * 下载需鉴权文件到本地缓存后通过 FileProvider 打开。
+ *
+ * 直接用外部浏览器访问受 {@code Authorization} 保护的下载地址必然 401，
+ * 因此统一走带鉴权头的下载链路，再交给系统应用打开。
+ */
+private suspend fun openDownloadFile(
+    context: Context,
+    file: ManagedFile,
+    url: String,
+    authToken: String?
+) {
+    val localUri = runCatching {
+        withContext(Dispatchers.IO) {
+            downloadPreviewFile(context = context, file = file, url = url, authToken = authToken)
+        }
+    }.getOrElse {
+        Toast.makeText(context, "文件下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
+        return
     }
+    val intent = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(localUri, file.mimeTypeForOpen())
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }
+        .onFailure {
+            Toast.makeText(context, "没有可打开该文件的应用", Toast.LENGTH_SHORT).show()
+        }
 }
 
 private inline fun <T> HttpURLConnection.use(block: (HttpURLConnection) -> T): T {

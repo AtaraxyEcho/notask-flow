@@ -1,5 +1,7 @@
 package com.notaskflow.feature.members
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -134,7 +136,7 @@ fun MembersRoute(
                 item { Spacer(Modifier.height(16.dp)) }
             }
             if (spaceId == null) {
-                item { StateText("请先选择空间") }
+                item { StateText(stringResource(R.string.common_select_space_first)) }
             } else if (uiState.isLoading && uiState.members.isEmpty()) {
                 item {
                     Box(
@@ -149,7 +151,7 @@ fun MembersRoute(
             } else if (uiState.errorMessage != null && uiState.members.isEmpty()) {
                 item { StateText(uiState.errorMessage ?: "成员加载失败") }
             } else if (uiState.members.isEmpty()) {
-                item { StateText("暂无成员") }
+                item { StateText(stringResource(R.string.members_empty)) }
             } else {
                 uiState.members.groupBy { it.roleName.ifBlank { it.roleCode.ifBlank { "成员" } } }
                     .forEach { (role, members) ->
@@ -227,8 +229,8 @@ fun MembersRoute(
     pendingRemoveMember?.let { member ->
         AlertDialog(
             onDismissRequest = { pendingRemoveMember = null },
-            title = { Text("移除成员") },
-            text = { Text("确定将 ${member.displayName()} 移出当前团队空间吗？该成员将无法继续访问团队内容。") },
+            title = { Text(stringResource(R.string.members_remove_title)) },
+            text = { Text(stringResource(R.string.members_remove_confirm, member.displayName())) },
             confirmButton = {
                 Button(
                     enabled = !uiState.isMutating,
@@ -237,12 +239,12 @@ fun MembersRoute(
                         pendingRemoveMember = null
                     }
                 ) {
-                    Text("移除")
+                    Text(stringResource(R.string.members_remove))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRemoveMember = null }, enabled = !uiState.isMutating) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -251,8 +253,8 @@ fun MembersRoute(
     approvingApplication?.let { application ->
         AlertDialog(
             onDismissRequest = { approvingApplication = null },
-            title = { Text("通过申请") },
-            text = { Text("确认通过 ${application.applicantUsername.ifBlank { "该用户" }} 的加入申请吗？") },
+            title = { Text(stringResource(R.string.members_approve_title)) },
+            text = { Text(stringResource(R.string.members_approve_confirm, application.applicantUsername.ifBlank { stringResource(R.string.members_fallback_user) })) },
             confirmButton = {
                 Button(
                     enabled = !uiState.isMutating,
@@ -261,12 +263,12 @@ fun MembersRoute(
                         approvingApplication = null
                     }
                 ) {
-                    Text("通过")
+                    Text(stringResource(R.string.members_approve))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { approvingApplication = null }, enabled = !uiState.isMutating) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -275,14 +277,14 @@ fun MembersRoute(
     rejectingApplication?.let { application ->
         AlertDialog(
             onDismissRequest = { rejectingApplication = null },
-            title = { Text("拒绝申请") },
+            title = { Text(stringResource(R.string.members_reject_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("确认拒绝 ${application.applicantUsername.ifBlank { "该用户" }} 的加入申请吗？")
+                    Text(stringResource(R.string.members_reject_confirm, application.applicantUsername.ifBlank { stringResource(R.string.members_fallback_user) }))
                     OutlinedTextField(
                         value = rejectReason,
                         onValueChange = { rejectReason = it },
-                        label = { Text("拒绝原因（选填）") },
+                        label = { Text(stringResource(R.string.members_reject_reason)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -295,12 +297,12 @@ fun MembersRoute(
                         rejectingApplication = null
                     }
                 ) {
-                    Text("拒绝")
+                    Text(stringResource(R.string.members_reject))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { rejectingApplication = null }, enabled = !uiState.isMutating) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -411,10 +413,10 @@ private fun JoinApplicationCard(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onApprove, modifier = Modifier.weight(1f)) {
-                    Text("通过")
+                    Text(stringResource(R.string.members_approve))
                 }
                 TextButton(onClick = onReject, modifier = Modifier.weight(1f)) {
-                    Text("拒绝", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.members_reject), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -440,7 +442,7 @@ private fun InviteMemberDialog(
         text = {
             if (invite == null) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("加入角色", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.members_join_role), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         INVITE_ROLE_CHOICES.forEach { role ->
                             RoleChoicePill(
@@ -453,7 +455,7 @@ private fun InviteMemberDialog(
                     OutlinedTextField(
                         value = expireMinutes,
                         onValueChange = { value -> expireMinutes = value.filter(Char::isDigit).take(4) },
-                        label = { Text("有效期（分钟）") },
+                        label = { Text(stringResource(R.string.members_invite_expire)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -477,7 +479,7 @@ private fun InviteMemberDialog(
                     ) {
                         Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("复制邀请码")
+                        Text(stringResource(R.string.members_copy_invite))
                     }
                 }
             }
@@ -488,17 +490,17 @@ private fun InviteMemberDialog(
                     enabled = !isSaving && parsedExpireMinutes != null,
                     onClick = { onCreateInvite(selectedRole, parsedExpireMinutes) }
                 ) {
-                    Text("生成")
+                    Text(stringResource(R.string.common_generate))
                 }
             } else {
                 Button(onClick = onDismiss) {
-                    Text("完成")
+                    Text(stringResource(R.string.common_done))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -573,7 +575,7 @@ private fun MemberActionDialog(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text("成员角色", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_member_role), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MEMBER_ROLE_CHOICES.forEach { role ->
                         RoleChoicePill(
@@ -589,7 +591,7 @@ private fun MemberActionDialog(
                         onClick = onRemove,
                         enabled = !isSaving
                     ) {
-                        Text("移除成员", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.common_remove_member), color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -599,12 +601,12 @@ private fun MemberActionDialog(
                 enabled = !isSaving && !isOwner && selectedRole != member.roleCode,
                 onClick = { onUpdateRole(selectedRole) }
             ) {
-                Text("保存")
+                Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )

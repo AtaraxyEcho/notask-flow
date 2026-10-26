@@ -1,5 +1,6 @@
 package com.notaskflow.feature.home
 
+import com.notaskflow.feature.R
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -55,11 +56,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.notaskflow.core.R
 import com.notaskflow.core.common.formatDateTimeText
 import com.notaskflow.core.model.SpaceType
 import com.notaskflow.core.ui.components.BottomNavTab
@@ -320,13 +321,13 @@ private fun NoSpaceContent(
                         onClick = onCreateTeam,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("新建团队")
+                        Text(stringResource(R.string.home_create_team))
                     }
                     TextButton(
                         onClick = onJoinTeam,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("加入团队")
+                        Text(stringResource(R.string.home_join_team))
                     }
                 }
             }
@@ -366,8 +367,8 @@ private fun PersonalHomeContent(
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Image(
-                    painter = painterResource(R.drawable.personal_home),
-                    contentDescription = "首页封面",
+                    painter = painterResource(com.notaskflow.core.R.drawable.personal_home),
+                    contentDescription = stringResource(R.string.home_cover_desc),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -390,16 +391,16 @@ private fun PersonalHomeContent(
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 QuickActionCard(
-                    title = "写笔记",
-                    subtitle = "记录灵感",
+                    title = stringResource(R.string.home_write_note),
+                    subtitle = stringResource(R.string.home_write_note_hint),
                     icon = Icons.Filled.Edit,
                     iconTint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onCreateNote
                 )
                 QuickActionCard(
-                    title = "待办事项",
-                    subtitle = "${contentState?.pendingTodoTotal ?: 0} 项未完成",
+                    title = stringResource(R.string.home_todo_card),
+                    subtitle = stringResource(R.string.home_todo_pending, contentState?.pendingTodoTotal ?: 0),
                     icon = Icons.Filled.CheckCircle,
                     iconTint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.weight(1f),
@@ -431,21 +432,21 @@ private fun PersonalHomeContent(
         contentState?.errorMessage?.let { message ->
             item {
                 EmptyStateCard(
-                    title = "同步遇到问题",
+                    title = stringResource(R.string.home_sync_issue),
                     subtitle = message
                 )
             }
         }
 
         item {
-            SectionHeader(title = "最近笔记", actionText = "查看全部", onActionClick = onOpenNoteList)
+            SectionHeader(title = stringResource(R.string.home_recent_notes), actionText = stringResource(R.string.home_view_all), onActionClick = onOpenNoteList)
         }
 
         if (contentState?.recentNotes.isNullOrEmpty() && uiState !is PersonalHomeUiState.Loading) {
             item {
                 EmptyStateCard(
-                    title = "暂无最近笔记",
-                    subtitle = "写下第一条内容后会出现在这里"
+                    title = stringResource(R.string.home_no_recent_notes),
+                    subtitle = stringResource(R.string.home_no_recent_notes_hint)
                 )
             }
         } else {
@@ -455,14 +456,14 @@ private fun PersonalHomeContent(
         }
 
         item {
-            SectionHeader(title = "未完成待办", actionText = "查看全部", onActionClick = onOpenTodoList)
+            SectionHeader(title = stringResource(R.string.home_pending_todos), actionText = stringResource(R.string.home_view_all), onActionClick = onOpenTodoList)
         }
 
         if (contentState?.pendingTodos.isNullOrEmpty() && uiState !is PersonalHomeUiState.Loading) {
             item {
                 EmptyStateCard(
-                    title = "待办已清空",
-                    subtitle = "当前空间没有未完成事项"
+                    title = stringResource(R.string.home_todos_cleared),
+                    subtitle = stringResource(R.string.home_todos_cleared_hint)
                 )
             }
         } else {

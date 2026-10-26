@@ -7,6 +7,7 @@ import com.notaskflow.domain.dto.request.AttachmentBindRequest;
 import com.notaskflow.domain.dto.request.AttachmentUnbindRequest;
 import com.notaskflow.domain.entity.Attachment;
 import com.notaskflow.domain.entity.BusinessAttachment;
+import com.notaskflow.domain.entity.ManagedFile;
 import com.notaskflow.domain.entity.Note;
 import com.notaskflow.domain.entity.Task;
 import com.notaskflow.domain.entity.Todo;
@@ -16,6 +17,7 @@ import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.exception.ResourceNotFoundException;
 import com.notaskflow.mapper.AttachmentMapper;
 import com.notaskflow.mapper.BusinessAttachmentMapper;
+import com.notaskflow.mapper.ManagedFileMapper;
 import com.notaskflow.mapper.NoteMapper;
 import com.notaskflow.mapper.TaskMapper;
 import com.notaskflow.mapper.TodoMapper;
@@ -45,6 +47,8 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final AttachmentMapper attachmentMapper;
 
     private final BusinessAttachmentMapper businessAttachmentMapper;
+
+    private final ManagedFileMapper managedFileMapper;
 
     private final NoteMapper noteMapper;
 
@@ -133,7 +137,16 @@ public class AttachmentServiceImpl implements AttachmentService {
         ensureAttachmentInSpace(attachment, spaceId);
         Long currentUserId = LoginUserUtil.currentUserId();
         permissionValidator.ensureSpaceMember(spaceId, currentUserId);
-        businessAttachmentMapper.physicalDeleteByAttachmentId(id);
+        if (!currentUserId.equals(attachment.getUploaderId())) {
+            permissionValidator.ensureSpaceAdminOrOwner(spaceId, currentUserId);
+        }
+        Long referencedCount = businessAttachmentMapper.selectCount(Wrappers.<BusinessAttachment>lambdaQuery()
+                .eq(BusinessAttachment::getAttachmentId, id));
+        Long managedFileCount = managedFileMapper.selectCount(Wrappers.<ManagedFile>lambdaQuery()
+                .eq(ManagedFile::getAttachmentId, id));
+        if (referencedCount > 0 || managedFileCount > 0) {
+            throw new BusinessException(ErrorCode.CONFLICT, "附件仍被业务对象或网盘引用，请先解除引用后再删除");
+        }
         attachmentMapper.deleteById(id);
         minioStorageService.delete(attachment.getStoragePath());
         log.info("附件删除完成，spaceId={}，attachmentId={}，operatorId={}",

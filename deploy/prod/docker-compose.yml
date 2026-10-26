@@ -6,10 +6,10 @@ services:
     container_name: notask-flow-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}"
       MYSQL_DATABASE: ${MYSQL_DATABASE:-notask_flow}
-      MYSQL_USER: ${MYSQL_USERNAME:-notask}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-notask}
+      MYSQL_USER: "${MYSQL_USERNAME:-notask}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}"
       TZ: Asia/Hong_Kong
     command:
       - --character-set-server=utf8mb4
@@ -41,13 +41,13 @@ services:
       - --appendfsync
       - everysec
       - --requirepass
-      - ${REDIS_PASSWORD:-}
+      - "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"
     ports:
       - "${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a $${REDIS_PASSWORD:-} ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a $"${REDIS_PASSWORD:?REDIS_PASSWORD must be set}" ping"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-notask}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-notask}
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}"
       TZ: Asia/Hong_Kong
     ports:
       - "${RABBITMQ_HOST_PORT:-5672}:5672"
@@ -81,8 +81,8 @@ services:
     container_name: notask-flow-minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY must be set}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY:?MINIO_SECRET_KEY must be set}"
       TZ: Asia/Hong_Kong
     command: server /data --console-address ":9001"
     ports:
@@ -99,8 +99,8 @@ services:
     depends_on:
       - minio
     environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY must be set}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:?MINIO_SECRET_KEY must be set}"
       MINIO_BUCKET: ${MINIO_BUCKET:-notask-flow}
     entrypoint: /bin/sh
     command:
@@ -146,27 +146,27 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       MYSQL_DATABASE: ${MYSQL_DATABASE:-notask_flow}
-      MYSQL_USERNAME: ${MYSQL_USERNAME:-notask}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-notask}
+      MYSQL_USERNAME: "${MYSQL_USERNAME:-notask}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}"
       REDIS_DATABASE: ${REDIS_DATABASE:-0}
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-notask}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-notask}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      RABBITMQ_PASSWORD: "${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY must be set}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:?MINIO_SECRET_KEY must be set}"
       MINIO_BUCKET: ${MINIO_BUCKET:-notask-flow}
       ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-true}
       ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
       ELASTICSEARCH_CONNECTION_TIMEOUT: ${ELASTICSEARCH_CONNECTION_TIMEOUT:-3s}
       ELASTICSEARCH_SOCKET_TIMEOUT: ${ELASTICSEARCH_SOCKET_TIMEOUT:-3s}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"
       ADMIN_USERNAME: ${ADMIN_USERNAME:-Administrator}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-admin-password}
-      SA_TOKEN_JWT_SECRET: ${SA_TOKEN_JWT_SECRET:-notask-flow-test-jwt-secret-change-me}
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}"
+      SA_TOKEN_JWT_SECRET: "${SA_TOKEN_JWT_SECRET:?SA_TOKEN_JWT_SECRET must be set}"
       SA_TOKEN_IS_SHARE: ${SA_TOKEN_IS_SHARE:-false}
       SECURITY_CSRF_ENABLED: ${SECURITY_CSRF_ENABLED:-false}
       SECURITY_CORS_ALLOW_CREDENTIALS: ${SECURITY_CORS_ALLOW_CREDENTIALS:-false}
       SECURITY_ALLOWED_ORIGINS: ${SECURITY_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
-      COLLAB_INTERNAL_TOKEN: ${COLLAB_INTERNAL_TOKEN:-notask-flow-collab-internal-change-me}
+      COLLAB_INTERNAL_TOKEN: "${COLLAB_INTERNAL_TOKEN:?COLLAB_INTERNAL_TOKEN must be set}"
       COLLAB_REALTIME_BROADCAST_URL: ${COLLAB_REALTIME_BROADCAST_URL:-http://collab-ws:8081/internal/broadcast}
       NOTASK_MAIL_FROM: ${NOTASK_MAIL_FROM:-no-reply@notask-flow.local}
       NOTASK_APP_BASE_URL: ${NOTASK_APP_BASE_URL:-http://localhost:3000}
@@ -221,7 +221,7 @@ services:
       API_BASE_URL: ${COLLAB_API_BASE_URL:-http://app:8080}
       TICKET_VERIFY_PATH: /api/v1/internal/collab/tickets/consume
       SPACE_EVENT_TICKET_VERIFY_PATH: /api/v1/internal/collab/space-events/tickets/consume
-      INTERNAL_TOKEN: ${COLLAB_INTERNAL_TOKEN:-notask-flow-collab-internal-change-me}
+      INTERNAL_TOKEN: "${COLLAB_INTERNAL_TOKEN:?COLLAB_INTERNAL_TOKEN must be set}"
       COLLAB_DEBUG_LOGS: ${COLLAB_DEBUG_LOGS:-false}
       TZ: Asia/Hong_Kong
     ports:

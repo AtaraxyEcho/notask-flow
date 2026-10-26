@@ -20,7 +20,19 @@ public interface AttachmentMapper extends BaseMapper<Attachment> {
     @Select("""
             SELECT id, file_size
             FROM nt_attachment
-            WHERE is_deleted = 1
+            WHERE is_deleted <> 0
             """)
     List<Attachment> selectDeletedStorageRows();
+
+    /**
+     * 统计未删除附件的存储占用总字节数。
+     *
+     * @return 总字节数
+     */
+    @Select("""
+            SELECT COALESCE(SUM(file_size), 0)
+            FROM nt_attachment
+            WHERE is_deleted = 0
+            """)
+    Long sumActiveFileSize();
 }

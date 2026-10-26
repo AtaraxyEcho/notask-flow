@@ -1,5 +1,7 @@
 package com.notaskflow.feature.space
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -120,7 +122,7 @@ fun JoinTeamSpaceRoute(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         ) {
-            Text("提交加入申请")
+            Text(stringResource(R.string.space_submit_join))
         }
         if (uiState.mineApplications.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -235,7 +237,7 @@ private fun SpaceFormScaffold(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         }

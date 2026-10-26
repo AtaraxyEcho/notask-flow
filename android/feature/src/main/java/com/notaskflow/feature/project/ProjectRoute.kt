@@ -1,5 +1,7 @@
 package com.notaskflow.feature.project
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -108,7 +110,7 @@ fun ProjectRoute(
 
             if (spaceId == null) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    StateText("请先选择空间")
+                    StateText(stringResource(R.string.common_select_space_first))
                 }
             } else if (uiState.isLoading && uiState.projects.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -127,7 +129,7 @@ fun ProjectRoute(
                 }
             } else if (uiState.projects.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    StateText("暂无项目")
+                    StateText(stringResource(R.string.project_empty))
                 }
             } else {
                 items(uiState.projects, key = { project -> "project-${project.id}" }) { project ->
@@ -178,8 +180,8 @@ fun ProjectRoute(
     pendingDeleteProject?.let { project ->
         AlertDialog(
             onDismissRequest = { pendingDeleteProject = null },
-            title = { Text("删除项目") },
-            text = { Text("确定删除“${project.name}”吗？如果项目下仍有关联任务或笔记，后端可能会拒绝本次删除。") },
+            title = { Text(stringResource(R.string.project_delete_title)) },
+            text = { Text(stringResource(R.string.project_delete_confirm, project.name)) },
             confirmButton = {
                 Button(
                     enabled = !uiState.isSaving,
@@ -188,7 +190,7 @@ fun ProjectRoute(
                         pendingDeleteProject = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
@@ -196,7 +198,7 @@ fun ProjectRoute(
                     enabled = !uiState.isSaving,
                     onClick = { pendingDeleteProject = null }
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )

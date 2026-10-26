@@ -52,7 +52,8 @@ const MESSAGE_SYNC = 0
 const MESSAGE_AWARENESS = 1
 const FIRST_LINE_INDENT_VALUE = '2em'
 const TICKET_TIMEOUT_MS = 12000
-const RECONNECT_DELAY_MS = 1800
+const RECONNECT_INITIAL_DELAY_MS = 1000
+const RECONNECT_MAX_DELAY_MS = 30000
 const BOOTSTRAP_FALLBACK_DELAY_MS = 2500
 const DOCUMENT_STATE_FLUSH_DELAY_MS = 80
 const DEFAULT_COLLAB_WS_PORT = '8081'
@@ -594,6 +595,7 @@ class AndroidNoteCollabProvider {
   private socket: WebSocket | null = null
 
   private reconnectTimer: number | null = null
+  private reconnectAttempt = 0
 
   private documentStateFlushTimer: number | null = null
 
@@ -695,10 +697,16 @@ class AndroidNoteCollabProvider {
     this.awareness.setLocalState(null)
     const message = event.code === 1008 ? '协作认证失败' : event.code === 1006 ? '协作服务连接失败' : '协作连接已断开，正在重连'
     this.emitStatus('reconnecting', event.reason || message)
+    const backoffDelay = Math.min(
+      RECONNECT_INITIAL_DELAY_MS * 2 ** this.reconnectAttempt,
+      RECONNECT_MAX_DELAY_MS,
+    )
+    const jitteredDelay = backoffDelay + Math.floor(Math.random() * 1000)
+    this.reconnectAttempt += 1
     this.reconnectTimer = window.setTimeout(() => {
       this.reconnectTimer = null
       this.connect()
-    }, RECONNECT_DELAY_MS)
+    }, jitteredDelay)
   }
 
   private readonly handleError = () => {
@@ -736,6 +744,7 @@ class AndroidNoteCollabProvider {
       return
     }
     this.isReady = true
+    this.reconnectAttempt = 0
     const localUser = {
       ...this.presence,
       userId: payload.userId || this.presence.userId || 0,

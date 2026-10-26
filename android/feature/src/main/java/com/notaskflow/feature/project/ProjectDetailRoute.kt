@@ -1,5 +1,7 @@
 package com.notaskflow.feature.project
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -140,7 +142,7 @@ fun ProjectDetailRoute(
         }
     ) { padding ->
         if (spaceId == null) {
-            StateText("请先选择空间", modifier = Modifier.padding(padding))
+            StateText(stringResource(R.string.common_select_space_first), modifier = Modifier.padding(padding))
             return@Scaffold
         }
         if (uiState.isLoading && uiState.project == null) {
@@ -173,10 +175,10 @@ fun ProjectDetailRoute(
                 when (selectedSection) {
                     ProjectSection.TASKS -> {
                         item {
-                            Text("项目任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.project_tasks), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         }
                         if (uiState.tasks.isEmpty()) {
-                            item { StateText("暂无项目任务") }
+                            item { StateText(stringResource(R.string.project_no_tasks)) }
                         } else {
                             items(uiState.tasks, key = { task -> "project-task-${task.id}" }) { task ->
                                 ProjectTaskRow(task = task, onClick = { onTaskClick(task.id) })
@@ -185,10 +187,10 @@ fun ProjectDetailRoute(
                     }
                     ProjectSection.NOTES -> {
                         item {
-                            Text("项目文档", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.project_docs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         }
                         if (uiState.notes.isEmpty()) {
-                            item { StateText("暂无项目文档") }
+                            item { StateText(stringResource(R.string.project_no_docs)) }
                         } else {
                             items(uiState.notes, key = { note -> "project-note-${note.id}" }) { note ->
                                 ProjectNoteRow(note = note, onClick = { onNoteClick(note.id) })
@@ -202,19 +204,19 @@ fun ProjectDetailRoute(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("项目成员", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.project_members), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                 if (uiState.availableMembers.isNotEmpty()) {
                                     TextButton(
                                         onClick = { showMemberPicker = true },
                                         enabled = !uiState.isMemberMutating
                                     ) {
-                                        Text("添加成员")
+                                        Text(stringResource(R.string.project_add_member))
                                     }
                                 }
                             }
                         }
                         if (uiState.members.isEmpty()) {
-                            item { StateText("暂无项目成员") }
+                            item { StateText(stringResource(R.string.project_no_members)) }
                         } else {
                             items(uiState.members, key = { member -> "project-member-${member.userId}" }) { member ->
                                 ProjectMemberRow(
@@ -537,7 +539,7 @@ private fun AddProjectMemberDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加项目成员") },
+        title = { Text(stringResource(R.string.project_add_member_title)) },
         text = {
             if (members.isEmpty()) {
                 Text(
@@ -608,12 +610,12 @@ private fun AddProjectMemberDialog(
                 enabled = !isSaving && selectedUserId != null && members.isNotEmpty(),
                 onClick = { selectedUserId?.let(onAdd) }
             ) {
-                Text("加入项目")
+                Text(stringResource(R.string.project_join))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -658,13 +660,13 @@ private fun ProjectMemberActionDialog(
                     enabled = !isSaving,
                     onClick = onRemove
                 ) {
-                    Text("移出项目")
+                    Text(stringResource(R.string.project_remove))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("关闭")
+                Text(stringResource(R.string.project_close))
             }
         }
     )

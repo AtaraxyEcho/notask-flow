@@ -26,6 +26,7 @@ import com.notaskflow.core.model.SpaceType as UiSpaceType
 import com.notaskflow.core.ui.components.BottomNavTab
 import com.notaskflow.core.ui.components.SpaceItem
 import com.notaskflow.core.ui.theme.NotaskFlowTheme
+import com.notaskflow.core.common.AppLocaleProvider
 import com.notaskflow.core.ui.theme.authpure.AuthPureTheme
 import com.notaskflow.domain.model.Space
 import com.notaskflow.domain.model.SpaceType
@@ -64,11 +65,12 @@ private fun NotaskFlowApp(
     appViewModel: AppViewModel = hiltViewModel()
 ) {
     val appUiState by appViewModel.uiState.collectAsState()
-    NotaskFlowTheme(config = appUiState.themeConfig) {
-        if (appUiState.isInitializing) {
-            SplashScreen()
-            return@NotaskFlowTheme
-        }
+    AppLocaleProvider {
+        NotaskFlowTheme(config = appUiState.themeConfig) {
+            if (appUiState.isInitializing) {
+                SplashScreen()
+                return@NotaskFlowTheme
+            }
         val navController = rememberNavController()
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
@@ -286,17 +288,31 @@ private fun NotaskFlowApp(
                     },
                     onNotificationClick = { notification ->
                         appViewModel.refreshSession(showInitializing = false)
+                        val targetSpaceId = notification.spaceId
+                        if (targetSpaceId != null && targetSpaceId != appUiState.currentSpace?.id) {
+                            appViewModel.selectSpace(targetSpaceId)
+                        }
                         when (notification.businessType) {
                             NotificationBusinessType.TASK -> {
-                                navController.navigateHomeTab(BottomNavTab.TASK.name)
+                                val businessId = notification.businessId
+                                if (businessId != null) {
+                                    navController.navigate(AppRoute.taskDetail(businessId))
+                                } else {
+                                    navController.navigateHomeTab(BottomNavTab.TASK.name)
+                                }
                             }
                             NotificationBusinessType.NOTE -> {
-                                val tab = if (appUiState.currentSpace?.type == SpaceType.TEAM) {
-                                    BottomNavTab.DOCUMENT
+                                val businessId = notification.businessId
+                                if (businessId != null) {
+                                    navController.navigate(AppRoute.noteEdit(businessId))
                                 } else {
-                                    BottomNavTab.NOTE
+                                    val tab = if (appUiState.currentSpace?.type == SpaceType.TEAM) {
+                                        BottomNavTab.DOCUMENT
+                                    } else {
+                                        BottomNavTab.NOTE
+                                    }
+                                    navController.navigateHomeTab(tab.name)
                                 }
-                                navController.navigateHomeTab(tab.name)
                             }
                             NotificationBusinessType.TODO -> {
                                 navController.navigateHomeTab(BottomNavTab.TODO.name)
@@ -322,6 +338,7 @@ private fun NotaskFlowApp(
                     spaceId = appUiState.currentSpace?.id
                 )
             }
+        }
         }
     }
 }

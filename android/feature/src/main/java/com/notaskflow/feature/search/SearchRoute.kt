@@ -1,5 +1,7 @@
 package com.notaskflow.feature.search
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -104,7 +106,7 @@ fun SearchRoute(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("全局搜索", fontWeight = FontWeight.SemiBold) },
+                title = { Text(stringResource(R.string.search_global), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -154,7 +156,7 @@ fun SearchRoute(
                                 shape = RoundedCornerShape(12.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                             ) {
-                                Text("搜索", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.common_search_action), style = MaterialTheme.typography.labelMedium)
                             }
                         }
                         SearchScopeTabs(

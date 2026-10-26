@@ -7,9 +7,15 @@
         </RouterLink>
         <div class="auth-topbar-actions">
           <LanguageSwitcher />
-          <a class="auth-help-link" href="#" :aria-label="t('auth.help')" :title="t('auth.help')">
+          <button
+            type="button"
+            class="auth-help-link"
+            :aria-label="t('auth.help')"
+            :title="t('auth.help')"
+            @click="helpDialogVisible = true"
+          >
             <span class="material-symbols-outlined">help</span>
-          </a>
+          </button>
         </div>
       </div>
     </header>
@@ -29,6 +35,19 @@
     </footer>
 
     <LegalDocumentDialog v-model:visible="legalDialogVisible" :type="legalDialogType" />
+
+    <el-dialog v-model="helpDialogVisible" :title="t('auth.helpTitle')" width="480px">
+      <p class="text-sm text-on-surface-variant">{{ t('auth.helpIntro') }}</p>
+      <ul class="mt-4 space-y-2 text-sm text-on-surface-variant">
+        <li class="flex gap-2"><span>·</span><span>{{ t('auth.helpItemAccount') }}</span></li>
+        <li class="flex gap-2"><span>·</span><span>{{ t('auth.helpItemPassword') }}</span></li>
+        <li class="flex gap-2"><span>·</span><span>{{ t('auth.helpItemDevice') }}</span></li>
+        <li class="flex gap-2"><span>·</span><span>{{ t('auth.helpItemContact') }}</span></li>
+      </ul>
+      <template #footer>
+        <el-button type="primary" @click="helpDialogVisible = false">{{ t('auth.helpClose') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -45,6 +64,7 @@ const { t } = useI18n()
 const isRegisterPage = computed(() => route.name === 'register')
 const currentYear = new Date().getFullYear()
 
+const helpDialogVisible = ref(false)
 const legalDialogVisible = ref(false)
 const legalDialogType = ref<LegalDocumentType>('terms')
 

@@ -95,6 +95,14 @@ public class SpaceJoinRequestServiceImpl implements SpaceJoinRequestService {
         }
         spaceJoinRequestMapper.insert(entity);
 
+        Space targetSpace = entity.getTargetSpaceId() == null ? null : spaceMapper.selectById(entity.getTargetSpaceId());
+        if (targetSpace != null && Boolean.FALSE.equals(targetSpace.getJoinApprovalRequired())) {
+            autoApprove(entity, targetSpace);
+            log.info("团队无需审核，加入申请已自动通过，requestId={}，spaceId={}，applicantUserId={}",
+                    entity.getId(), targetSpace.getId(), currentUserId);
+            return toVO(entity);
+        }
+
         User applicant = userMapper.selectById(currentUserId);
         String applicantName = applicant == null ? "有新成员" : resolveDisplayName(applicant);
         String teamName = request.getTeamName() == null ? "" : request.getTeamName().trim();
@@ -113,6 +121,35 @@ public class SpaceJoinRequestServiceImpl implements SpaceJoinRequestService {
         log.info("团队加入申请创建完成，requestId={}，applicantUserId={}，supervisorUserId={}",
                 entity.getId(), currentUserId, supervisor.getId());
         return toVO(entity);
+    }
+
+    /**
+     * 自动通过无需审核的加入申请。
+     *
+     * @param entity 加入申请实体
+     * @param space 目标空间
+     */
+    private void autoApprove(SpaceJoinRequest entity, Space space) {
+        Role role = findJoinableRole(RoleCode.SPACE_MEMBER.getCode());
+        SpaceMember exists = permissionValidator.findSpaceMember(space.getId(), entity.getApplicantUserId());
+        if (exists == null) {
+            SpaceMember member = new SpaceMember();
+            member.setSpaceId(space.getId());
+            member.setUserId(entity.getApplicantUserId());
+            member.setRoleId(role.getId());
+            spaceMemberMapper.insert(member);
+        }
+        entity.setStatus(JoinRequestStatus.APPROVED);
+        entity.setReviewedAt(LocalDateTime.now());
+        spaceJoinRequestMapper.updateById(entity);
+        publishNotification(
+                entity.getApplicantUserId(),
+                NotificationType.SPACE_JOIN_APPROVED,
+                BusinessType.SPACE_JOIN_REQUEST,
+                entity.getId(),
+                "已加入团队空间",
+                "团队「" + space.getName() + "」无需审核，你已自动加入该空间。"
+        );
     }
 
     /**

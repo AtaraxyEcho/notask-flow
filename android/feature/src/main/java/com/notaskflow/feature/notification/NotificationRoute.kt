@@ -1,5 +1,7 @@
 package com.notaskflow.feature.notification
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -100,7 +102,7 @@ fun NotificationRoute(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("站内通知")
+                        Text(stringResource(R.string.notification_title))
                         if (uiState.unreadCount > 0) {
                             Text(
                                 text = " (${uiState.unreadCount.coerceAtMost(99)})",
@@ -173,7 +175,7 @@ fun NotificationRoute(
             } else if (uiState.errorMessage != null && visibleNotifications.isEmpty()) {
                 item { StateText(uiState.errorMessage ?: "加载失败") }
             } else if (visibleNotifications.isEmpty()) {
-                item { StateText("暂无通知") }
+                item { StateText(stringResource(R.string.notification_empty)) }
             } else {
                 items(visibleNotifications, key = { notification -> "notification-${notification.id}" }) { notification ->
                     AnimatedVisibility(
@@ -284,7 +286,7 @@ private fun NotificationHeader(
                     .clip(RoundedCornerShape(50))
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                Text("全部已读")
+                Text(stringResource(R.string.notification_mark_all_read))
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -294,7 +296,7 @@ private fun NotificationHeader(
                 enabled = !isMutating,
                 shape = RoundedCornerShape(50)
             ) {
-                Text("清空已读")
+                Text(stringResource(R.string.notification_clear_read))
             }
             if (isMutating) {
                 CircularProgressIndicator(
@@ -357,12 +359,12 @@ private fun NotificationSelectionBar(
             modifier = Modifier.weight(1f)
         )
         TextButton(onClick = onMarkRead) {
-            Text("已读")
+            Text(stringResource(R.string.notification_read))
         }
         TextButton(onClick = onDelete) {
             Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
-            Text("删除")
+            Text(stringResource(R.string.common_delete))
         }
         IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
             Icon(Icons.Filled.Close, contentDescription = "退出多选", modifier = Modifier.size(18.dp))

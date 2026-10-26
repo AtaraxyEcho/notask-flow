@@ -99,4 +99,219 @@
     <string name="auth_reset_success">Password has been reset</string>
     <string name="auth_reset_failed">Failed to reset password</string>
     <string name="auth_forgot_footer">You will return to the sign-in page after the reset</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_account_security">Account &amp; Security</string>
+    <string name="settings_edit_profile">Edit profile</string>
+    <string name="settings_edit_profile_hint">Nickname; tap the avatar above to change it</string>
+    <string name="settings_change_email">Change email</string>
+    <string name="settings_change_email_hint">Requires verification code from the old email</string>
+    <string name="settings_change_password">Change password</string>
+    <string name="settings_change_password_hint">Requires your current password</string>
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_theme_appearance">Theme &amp; appearance</string>
+    <string name="settings_notification">Notification preferences</string>
+    <string name="settings_notification_hint">Tasks, notes, mentions, system notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_other">Other</string>
+    <string name="settings_logout">Sign out</string>
+    <string name="settings_nickname">Nickname</string>
+    <string name="settings_email">Email</string>
+    <string name="settings_email_readonly_hint">Use "Change email" in settings; verification code required</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_confirm_change">Confirm</string>
+    <string name="settings_current_email">Current email</string>
+    <string name="settings_new_email">New email</string>
+    <string name="settings_email_code">Verification code</string>
+    <string name="settings_current_password">Current password</string>
+    <string name="settings_new_password">New password</string>
+    <string name="settings_confirm_new_password">Confirm new password</string>
+    <string name="settings_theme_mode">Mode</string>
+    <string name="settings_personal_theme">Personal theme</string>
+
+    <!-- 首页 -->
+    <string name="home_cover_desc">Home cover</string>
+    <string name="home_write_note">New note</string>
+    <string name="home_write_note_hint">Capture ideas</string>
+    <string name="home_todo_card">To-dos</string>
+    <string name="home_todo_pending">%1$d pending</string>
+    <string name="home_sync_issue">Sync issue</string>
+    <string name="home_recent_notes">Recent notes</string>
+    <string name="home_view_all">View all</string>
+    <string name="home_no_recent_notes">No recent notes</string>
+    <string name="home_no_recent_notes_hint">Your first note will appear here</string>
+    <string name="home_pending_todos">Pending to-dos</string>
+    <string name="home_todos_cleared">All caught up</string>
+    <string name="home_todos_cleared_hint">No pending items in this space</string>
+    <string name="home_create_team">New team</string>
+    <string name="home_join_team">Join team</string>
+
+    <!-- 待办 -->
+    <string name="todo_search_placeholder">Search to-dos</string>
+    <string name="todo_select_space_first">Select a space first</string>
+    <string name="todo_empty">No to-dos</string>
+    <string name="todo_create_title">New to-do</string>
+    <string name="todo_edit_title">Edit to-do</string>
+    <string name="todo_delete_title">Delete to-do</string>
+    <string name="todo_delete_confirm">Delete "%1$s"?</string>
+    <string name="todo_title_label">To-do title</string>
+    <string name="todo_deadline_label">Deadline</string>
+
+    <!-- 通用/列表 -->
+    <string name="task_empty">No tasks</string>
+    <string name="task_progress">Progress</string>
+    <string name="note_empty">No notes</string>
+    <string name="note_create_notebook">New notebook</string>
+    <string name="note_create">Create</string>
+    <string name="note_delete_title">Delete note</string>
+    <string name="note_delete_confirm">Delete "%1$s"? It will no longer be accessible in this list.</string>
+    <string name="note_delete_notebook_title">Delete notebook</string>
+    <string name="note_delete_notebook_confirm">Delete "%1$s"? If the notebook still has content, the server may reject the deletion.</string>
+    <string name="note_all_notes">All notes</string>
+    <string name="common_select_space_first">Select a space first</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_cancel">Cancel</string>
+
+    <!-- 成员 -->
+    <string name="members_empty">No members</string>
+    <string name="members_remove_title">Remove member</string>
+    <string name="members_remove_confirm">Remove %1$s from this team space? They will lose access to team content.</string>
+    <string name="members_remove">Remove</string>
+    <string name="members_approve_title">Approve request</string>
+    <string name="members_approve_confirm">Approve the join request from %1$s?</string>
+    <string name="members_approve">Approve</string>
+    <string name="members_reject_title">Reject request</string>
+    <string name="members_reject_confirm">Reject the join request from %1$s?</string>
+    <string name="members_reject_reason">Reason (optional)</string>
+    <string name="members_reject">Reject</string>
+    <string name="members_join_role">Join as</string>
+    <string name="members_invite_expire">Expires in (minutes)</string>
+    <string name="members_copy_invite">Copy invite code</string>
+    <string name="members_fallback_user">this user</string>
+
+    <!-- 项目 -->
+    <string name="project_tasks">Project tasks</string>
+    <string name="project_no_tasks">No project tasks</string>
+    <string name="project_docs">Project docs</string>
+    <string name="project_no_docs">No project docs</string>
+    <string name="project_members">Project members</string>
+    <string name="project_no_members">No project members</string>
+    <string name="project_add_member">Add member</string>
+    <string name="project_add_member_title">Add project member</string>
+    <string name="project_join">Join project</string>
+    <string name="project_remove">Remove</string>
+    <string name="project_close">Close</string>
+    <string name="project_empty">No projects</string>
+    <string name="project_delete_title">Delete project</string>
+    <string name="project_delete_confirm">Delete "%1$s"? If the project still has linked tasks or notes, the server may reject the deletion.</string>
+
+    <!-- 统计/通知 -->
+    <string name="stats_member_load">Member load</string>
+    <string name="stats_no_load">No load data</string>
+    <string name="stats_recent_activity">Recent activity</string>
+    <string name="stats_no_activity">No activity</string>
+    <string name="stats_note_trend">Note trend</string>
+    <string name="stats_no_trend">No trend data</string>
+    <string name="stats_note_trend_7d">Notes in the last 7 days</string>
+    <string name="notification_title">Notifications</string>
+    <string name="notification_empty">No notifications</string>
+    <string name="notification_mark_all_read">Mark all read</string>
+    <string name="notification_clear_read">Clear read</string>
+    <string name="notification_read">Read</string>
+
+    <!-- 文件 -->
+    <string name="file_restore_title">Restore file</string>
+    <string name="file_restore_confirm">Restore "%1$s"?</string>
+    <string name="file_restore">Restore</string>
+    <string name="file_purge_title">Delete permanently</string>
+    <string name="file_purge_confirm">"%1$s" will be deleted permanently and cannot be recovered. Continue?</string>
+    <string name="file_purge">Delete permanently</string>
+    <string name="file_delete_title">Delete file</string>
+    <string name="file_delete_folder_title">Delete folder</string>
+    <string name="file_delete_folder_confirm">Delete "%1$s"? If the folder still has content, the server may reject the deletion.</string>
+    <string name="file_new_folder">New folder</string>
+    <string name="file_move_title">Move "%1$s"</string>
+    <string name="file_move_to_root">Move to root</string>
+    <string name="file_move_to">Move to %1$s</string>
+    <string name="file_move_to_all">Move to all files</string>
+
+    <!-- 任务 -->
+    <string name="task_member_duties">Member duties</string>
+    <string name="task_complete_duty">Complete duty</string>
+    <string name="task_edit">Edit task</string>
+    <string name="task_delete_title">Delete task</string>
+    <string name="task_delete_confirm">Delete this task? Related comments, member duties and attachment references may also be affected.</string>
+    <string name="task_claim_open">Claim open task</string>
+    <string name="task_claim">Claim</string>
+    <string name="task_start">Start</string>
+    <string name="task_complete">Complete</string>
+    <string name="task_select_member">Select member</string>
+    <string name="task_attachments">Task attachments</string>
+    <string name="task_manage">Manage</string>
+    <string name="task_no_attachments">No attachments yet</string>
+    <string name="task_open">Open</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_save">Save</string>
+    <string name="common_close">Close</string>
+
+    <!-- 笔记编辑 -->
+    <string name="note_share">Share</string>
+    <string name="note_version_history">Version history</string>
+    <string name="note_attachment_manage">Manage attachments</string>
+    <string name="note_paper_texture">Paper texture</string>
+    <string name="note_export">Export</string>
+    <string name="note_generate_share_link">Create share link</string>
+    <string name="note_generate_link">Create link</string>
+    <string name="note_permanent">Never expires</string>
+    <string name="note_share_link_generated">Share link created</string>
+    <string name="note_got_it">Got it</string>
+    <string name="note_exit_edit_title">Leave editor?</string>
+    <string name="note_exit_edit_confirm">This note has unsaved changes. Leaving may lose the latest edits.</string>
+    <string name="note_exit">Leave</string>
+    <string name="note_continue_edit">Keep editing</string>
+    <string name="note_delete_confirm_short">Delete this note? Reload the list to confirm the status.</string>
+    <string name="note_open_attachment">Open attachment</string>
+    <string name="note_open_attachment_confirm">Open "%1$s"?</string>
+    <string name="note_export_type_title">Choose export type</string>
+
+    <!-- 通用动作 -->
+    <string name="common_restore">Restore</string>
+    <string name="common_purge">Delete permanently</string>
+    <string name="common_approve">Approve</string>
+    <string name="common_reject">Reject</string>
+    <string name="common_generate">Generate</string>
+    <string name="common_done">Done</string>
+    <string name="common_member_role">Member role</string>
+    <string name="common_remove_member">Remove member</string>
+    <string name="common_no_files">No files</string>
+    <string name="common_move_to_folder">Move to %1$s</string>
+
+    <!-- 收尾 -->
+    <string name="note_export_done">Export complete</string>
+    <string name="note_insert_table">Insert table</string>
+    <string name="note_attachment_ref">Attachment reference</string>
+    <string name="note_no_ref_files">No files to reference</string>
+    <string name="note_no_history">No history yet</string>
+    <string name="note_no_attachments">No attachments yet</string>
+    <string name="common_create">Create</string>
+    <string name="common_edit_action">Edit</string>
+
+    <!-- 最终收尾 -->
+    <string name="common_next">Next</string>
+    <string name="common_pick_time">Pick time</string>
+    <string name="common_ok">OK</string>
+    <string name="common_start">Start</string>
+    <string name="common_end">End</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_search_action">Search</string>
+    <string name="file_open_file">Open file</string>
+    <string name="settings_save_period">Save period</string>
+    <string name="space_submit_join">Submit application</string>
+    <string name="search_global">Global search</string>
+    <string name="task_create_title">New task</string>
+    <string name="task_project">Project</string>
+    <string name="task_no_project">No project</string>
+    <string name="task_assign_members">Assign members</string>
 </resources>

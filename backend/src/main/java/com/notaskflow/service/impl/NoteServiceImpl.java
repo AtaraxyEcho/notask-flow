@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.common.constant.RedisKeyConstants;
+import com.notaskflow.common.enums.BusinessType;
 import com.notaskflow.common.enums.NoteHistorySaveType;
 import com.notaskflow.common.enums.SearchIndexOperation;
 import com.notaskflow.common.enums.SpaceRealtimeEventType;
@@ -31,6 +32,7 @@ import com.notaskflow.exception.AccessDeniedException;
 import com.notaskflow.exception.BusinessException;
 import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.exception.ResourceNotFoundException;
+import com.notaskflow.mapper.BusinessAttachmentMapper;
 import com.notaskflow.mapper.NoteHistoryMapper;
 import com.notaskflow.mapper.NoteMapper;
 import com.notaskflow.mapper.NoteTagMapper;
@@ -43,6 +45,7 @@ import com.notaskflow.service.NoteService;
 import com.notaskflow.service.NoteSearchService;
 import com.notaskflow.service.SpaceRealtimeEventService;
 import com.notaskflow.service.SystemSettingService;
+import com.notaskflow.utils.SqlLikeUtils;
 import com.notaskflow.utils.HtmlSanitizerUtil;
 import com.notaskflow.utils.LoginUserUtil;
 import com.notaskflow.utils.RedisUtil;
@@ -54,10 +57,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -100,6 +105,7 @@ public class NoteServiceImpl implements NoteService {
     private final NoteMapper noteMapper;
     private final NoteHistoryMapper noteHistoryMapper;
     private final NoteTagMapper noteTagMapper;
+    private final BusinessAttachmentMapper businessAttachmentMapper;
     private final ProjectMapper projectMapper;
     private final TagMapper tagMapper;
     private final UserMapper userMapper;
@@ -135,15 +141,12 @@ public class NoteServiceImpl implements NoteService {
                 .eq(query.getProjectId() != null, Note::getProjectId, query.getProjectId())
                 .in(!noteIds.isEmpty(), Note::getId, noteIds)
                 .and(StringUtils.hasText(query.getKeyword()), condition -> condition
-                        .like(Note::getTitle, query.getKeyword())
+                        .like(Note::getTitle, SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(Note::getContent, query.getKeyword()))
+                        .like(Note::getContent, SqlLikeUtils.escape(query.getKeyword())))
                 .orderByDesc(Note::getGmtModified);
         IPage<Note> result = noteMapper.selectPage(page, wrapper);
-        List<NoteVO> list = result.getRecords().stream()
-                .map(note -> toVO(note, canCurrentUserEditNote(note), isTeamSpace(note.getSpaceId())))
-                .toList();
-        return PageResponse.of(page, list);
+        return PageResponse.of(page, toVOList(result.getRecords(), spaceId));
     }
 
     /**
@@ -353,6 +356,36 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
+     * 协同服务兜底保存笔记正文快照（无用户上下文）。
+     *
+     * <p>由协同服务在房间销毁前调用，内容与库中一致时直接返回，不产生新写入。</p>
+     *
+     * @param id 笔记标识
+     * @param content 纯文本正文
+     * @param contentHtml 富文本 HTML
+     * @return 笔记详情
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public NoteVO saveCollabContentSnapshot(Long id, String content, String contentHtml) {
+        Note note = noteMapper.selectById(id);
+        if (note == null) {
+            throw new ResourceNotFoundException("笔记不存在");
+        }
+        String sanitizedHtml = sanitizeContentHtml(contentHtml);
+        if (Objects.equals(note.getContent(), content) && Objects.equals(note.getContentHtml(), sanitizedHtml)) {
+            return toVO(note, false, isTeamSpace(note.getSpaceId()));
+        }
+        note.setContent(content);
+        note.setContentHtml(sanitizedHtml);
+        noteMapper.updateById(note);
+        publishSearchIndexUpsert(note.getId());
+        publishDocumentRealtimeEvent(note.getSpaceId(), SpaceRealtimeEventType.DOCUMENT_UPDATED, note);
+        log.info("协同快照兜底保存成功: noteId={}", id);
+        return toVO(note, false, isTeamSpace(note.getSpaceId()));
+    }
+
+    /**
      * 删除笔记（软删除）
      *
      * @param spaceId 空间ID
@@ -365,6 +398,7 @@ public class NoteServiceImpl implements NoteService {
         permissionValidator.ensureNoteOwnerOrAdmin(note, LoginUserUtil.currentUserId());
         noteMapper.deleteById(id);
         noteTagMapper.physicalDeleteByNoteId(id);
+        businessAttachmentMapper.physicalDeleteByBusinessIds(BusinessType.NOTE, List.of(id));
         publishSearchIndexDelete(id);
         publishDocumentRealtimeEvent(spaceId, SpaceRealtimeEventType.DOCUMENT_DELETED, note);
         log.info("删除笔记成功: spaceId={}, noteId={}, userId={}",
@@ -422,10 +456,10 @@ public class NoteServiceImpl implements NoteService {
         createSnapshot(note, NoteHistorySaveType.MANUAL, history.getTitle(), history.getContent());
         note.setTitle(history.getTitle());
         note.setContent(history.getContent());
-        note.setContentHtml(null);
+        note.setContentHtml(resolveRestoredContentHtml(history));
         noteMapper.updateById(note);
         publishSearchIndexUpsert(note.getId());
-        publishDocumentRealtimeEvent(spaceId, SpaceRealtimeEventType.DOCUMENT_UPDATED, note);
+        publishDocumentRealtimeEvent(spaceId, SpaceRealtimeEventType.DOCUMENT_UPDATED, note, true);
         cleanOldHistories(note.getId());
         log.info("恢复笔记版本成功: spaceId={}, noteId={}, version={}, userId={}",
                 spaceId, id, version, LoginUserUtil.currentUserId());
@@ -509,9 +543,9 @@ public class NoteServiceImpl implements NoteService {
         }
         return noteMapper.selectList(Wrappers.<Note>lambdaQuery()
                         .eq(Note::getSpaceId, spaceId)
-                        .and(condition -> condition.like(Note::getTitle, keyword)
+                        .and(condition -> condition.like(Note::getTitle, SqlLikeUtils.escape(keyword))
                                 .or()
-                                .like(Note::getContent, keyword))
+                                .like(Note::getContent, SqlLikeUtils.escape(keyword)))
                         .orderByDesc(Note::getGmtModified))
                 .stream()
                 .map(note -> toVO(note, canCurrentUserEditNote(note), isTeamSpace(note.getSpaceId())))
@@ -686,11 +720,27 @@ public class NoteServiceImpl implements NoteService {
      * @param note 笔记实体
      */
     private void publishDocumentRealtimeEvent(Long spaceId, SpaceRealtimeEventType type, Note note) {
+        publishDocumentRealtimeEvent(spaceId, type, note, false);
+    }
+
+    /**
+     * 发布文档实时事件。
+     *
+     * @param spaceId 空间标识
+     * @param type 事件类型
+     * @param note 笔记实体
+     * @param resetCollaboration 是否要求协同服务丢弃内存中的文档状态
+     */
+    private void publishDocumentRealtimeEvent(Long spaceId, SpaceRealtimeEventType type, Note note,
+                                              boolean resetCollaboration) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("noteId", note.getId());
         payload.put("notebookId", note.getNotebookId());
         payload.put("title", note.getTitle());
         payload.put("projectId", note.getProjectId());
+        if (resetCollaboration) {
+            payload.put("collabReset", true);
+        }
         spaceRealtimeEventService.publish(spaceId, type, payload);
     }
 
@@ -849,6 +899,7 @@ public class NoteServiceImpl implements NoteService {
                 history.setNoteId(note.getId());
                 history.setTitle(note.getTitle());
                 history.setContent(note.getContent());
+                history.setContentHtml(note.getContentHtml());
                 history.setVersion(nextVersion);
                 history.setSaveType(resolveHistorySaveType(saveType));
                 history.setChangeSummary(buildChangeSummary(note, nextTitle, nextContent));
@@ -958,6 +1009,78 @@ public class NoteServiceImpl implements NoteService {
     }
 
     /**
+     * 批量转换笔记视图对象，一次性预加载项目名称与标签，避免逐条查询。
+     *
+     * @param notes 笔记实体列表
+     * @param spaceId 空间标识
+     * @return 笔记视图列表
+     */
+    private List<NoteVO> toVOList(List<Note> notes, Long spaceId) {
+        if (notes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        boolean collabEnabled = isTeamSpace(spaceId);
+        Map<Long, String> projectNames = loadProjectNames(notes);
+        Map<Long, List<TagVO>> tagsByNote = loadTags(notes);
+        List<NoteVO> list = new ArrayList<>(notes.size());
+        for (Note note : notes) {
+            list.add(new NoteVO(note.getId(), note.getSpaceId(), note.getNotebookId(), note.getProjectId(),
+                    projectNames.get(note.getProjectId()), note.getUserId(), note.getTitle(), note.getContent(),
+                    sanitizeContentHtml(note.getContentHtml()), canCurrentUserEditNote(note), collabEnabled,
+                    note.getIsPublic(), note.getShareCode(), note.getShareExpire(), note.getViewCount(),
+                    note.getGmtCreate(), note.getGmtModified(),
+                    tagsByNote.getOrDefault(note.getId(), Collections.emptyList())));
+        }
+        return list;
+    }
+
+    /**
+     * 批量加载笔记关联的项目名称。
+     *
+     * @param notes 笔记列表
+     * @return 项目标识到名称的映射
+     */
+    private Map<Long, String> loadProjectNames(List<Note> notes) {
+        List<Long> projectIds = notes.stream()
+                .map(Note::getProjectId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (projectIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return projectMapper.selectBatchIds(projectIds).stream()
+                .collect(Collectors.toMap(Project::getId, Project::getName, (left, right) -> left));
+    }
+
+    /**
+     * 批量加载笔记关联的标签。
+     *
+     * @param notes 笔记列表
+     * @return 笔记标识到标签列表的映射
+     */
+    private Map<Long, List<TagVO>> loadTags(List<Note> notes) {
+        List<Long> noteIds = notes.stream().map(Note::getId).toList();
+        List<NoteTag> noteTags = noteTagMapper.selectList(Wrappers.<NoteTag>lambdaQuery()
+                .in(NoteTag::getNoteId, noteIds));
+        if (noteTags.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> tagIds = noteTags.stream().map(NoteTag::getTagId).distinct().toList();
+        Map<Long, Tag> tagMap = tagMapper.selectBatchIds(tagIds).stream()
+                .collect(Collectors.toMap(Tag::getId, Function.identity(), (left, right) -> left));
+        Map<Long, List<TagVO>> result = new LinkedHashMap<>();
+        for (NoteTag noteTag : noteTags) {
+            Tag tag = tagMap.get(noteTag.getTagId());
+            if (tag == null) {
+                continue;
+            }
+            result.computeIfAbsent(noteTag.getNoteId(), key -> new ArrayList<>()).add(toTagVO(tag));
+        }
+        return result;
+    }
+
+    /**
      * 净化笔记HTML内容。
      *
      * @param contentHtml 原始HTML内容
@@ -1047,8 +1170,31 @@ public class NoteServiceImpl implements NoteService {
      */
     private NoteHistoryVO toHistoryVO(NoteHistory history) {
         return new NoteHistoryVO(history.getId(), history.getNoteId(), history.getTitle(), history.getContent(),
-                history.getVersion(), history.getChangeSummary(), resolveHistorySaveType(history.getSaveType()),
-                history.getGmtCreate());
+                history.getContentHtml(), history.getVersion(), history.getChangeSummary(),
+                resolveHistorySaveType(history.getSaveType()), history.getGmtCreate());
+    }
+
+    /**
+     * 解析恢复历史版本时使用的富文本内容。
+     *
+     * <p>历史版本未记录 {@code contentHtml}（旧数据）时，将纯文本正文转换为安全的段落 HTML，
+     * 避免恢复后富文本内容整体丢失。</p>
+     *
+     * @param history 历史版本
+     * @return 富文本 HTML
+     */
+    private String resolveRestoredContentHtml(NoteHistory history) {
+        if (StringUtils.hasText(history.getContentHtml())) {
+            return sanitizeContentHtml(history.getContentHtml());
+        }
+        String content = history.getContent();
+        if (!StringUtils.hasText(content)) {
+            return null;
+        }
+        String html = Arrays.stream(content.split("\\R", -1))
+                .map(line -> "<p>" + HtmlUtils.htmlEscape(line) + "</p>")
+                .collect(Collectors.joining());
+        return sanitizeContentHtml(html);
     }
 
     /**

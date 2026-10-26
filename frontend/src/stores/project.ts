@@ -273,13 +273,21 @@ export const useProjectStore = defineStore('project', {
       await this.loadMembers(projectId)
       ElMessage.success(translate('messages.projectMemberRemoved'))
     },
-    async deleteProject(projectId: number) {
+    async deleteProject(
+      projectId: number,
+      payload?: {
+        taskStrategy?: 'TRANSFER' | 'UNLINK' | 'DELETE'
+        taskTargetProjectId?: number
+        docStrategy?: 'TRANSFER' | 'UNLINK' | 'DELETE'
+        docTargetProjectId?: number
+      },
+    ) {
       const spaceId = useSpaceStore().currentSpaceId
       if (!spaceId) {
         return
       }
 
-      await projectService.delete(spaceId, projectId)
+      await projectService.delete(spaceId, projectId, payload)
       if (!isCurrentSpace(spaceId)) {
         return
       }

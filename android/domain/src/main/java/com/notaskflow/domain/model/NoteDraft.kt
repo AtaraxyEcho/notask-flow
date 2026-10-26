@@ -6,5 +6,6 @@ data class NoteDraft(
     val notebookId: Long?,
     val title: String,
     val content: String,
+    val contentHtml: String,
     val updatedAt: Long
 )

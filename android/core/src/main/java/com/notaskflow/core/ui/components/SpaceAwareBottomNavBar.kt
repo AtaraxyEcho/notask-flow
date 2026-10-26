@@ -29,33 +29,36 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
+import androidx.annotation.StringRes
+import com.notaskflow.core.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.notaskflow.core.model.SpaceType
 import com.notaskflow.core.ui.theme.TeamColors
 
 enum class BottomNavTab(
-    val label: String,
+    @StringRes val labelRes: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val personalOnly: Boolean = false,
     val teamOnly: Boolean = false
 ) {
-    HOME("首页", Icons.Filled.Home, Icons.Outlined.Home),
-    NOTE("笔记", Icons.Filled.Description, Icons.Outlined.Description, personalOnly = true),
-    TASK("任务", Icons.Filled.Task, Icons.Outlined.Task),
-    TODO("待办", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircle, personalOnly = true),
-    FILE("文件", Icons.Filled.Folder, Icons.Outlined.Folder),
-    STATS("统计", Icons.Filled.BarChart, Icons.Outlined.BarChart),
-    DOCUMENT("文档", Icons.Filled.Description, Icons.Outlined.Description, teamOnly = true),
-    PROJECT("项目", Icons.Filled.Home, Icons.Outlined.Home, teamOnly = true),
-    MEMBERS("成员", Icons.Filled.Groups, Icons.Outlined.Groups, teamOnly = true)
+    HOME(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.Home),
+    NOTE(R.string.nav_note, Icons.Filled.Description, Icons.Outlined.Description, personalOnly = true),
+    TASK(R.string.nav_task, Icons.Filled.Task, Icons.Outlined.Task),
+    TODO(R.string.nav_todo, Icons.Filled.CheckCircle, Icons.Outlined.CheckCircle, personalOnly = true),
+    FILE(R.string.nav_file, Icons.Filled.Folder, Icons.Outlined.Folder),
+    STATS(R.string.nav_stats, Icons.Filled.BarChart, Icons.Outlined.BarChart),
+    DOCUMENT(R.string.nav_document, Icons.Filled.Description, Icons.Outlined.Description, teamOnly = true),
+    PROJECT(R.string.nav_project, Icons.Filled.Home, Icons.Outlined.Home, teamOnly = true),
+    MEMBERS(R.string.nav_members, Icons.Filled.Groups, Icons.Outlined.Groups, teamOnly = true)
 }
 
 val PersonalSpaceTabs = listOf(
@@ -122,7 +125,7 @@ fun SpaceAwareBottomNavBar(
                 icon = {
                     Icon(
                         imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                        contentDescription = tab.label,
+                        contentDescription = stringResource(tab.labelRes),
                         modifier = Modifier
                             .size(24.dp)
                             .graphicsLayer {
@@ -134,7 +137,7 @@ fun SpaceAwareBottomNavBar(
                 },
                 label = {
                     Text(
-                        text = tab.label,
+                        text = stringResource(tab.labelRes),
                         style = MaterialTheme.typography.labelSmall,
                         color = iconColor,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium

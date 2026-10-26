@@ -57,14 +57,14 @@ mybatis-plus:
     db-config:
       id-type: auto
       logic-delete-field: isDeleted
-      logic-delete-value: 1
+      logic-delete-value: id
       logic-not-delete-value: 0
 
 sa-token:
   token-name: Authorization
   token-prefix: Bearer
   token-style: jwt-mixin
-  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:your-jwt-secret-key-change-me}
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET}
   timeout: 14400
   active-timeout: -1
   is-concurrent: true
@@ -84,7 +84,7 @@ logging:
 notask-flow:
   admin:
     username: ${ADMIN_USERNAME:Administrator}
-    password: ${ADMIN_PASSWORD:change-me}
+    password: ${ADMIN_PASSWORD}
   security:
     csrf-enabled: ${SECURITY_CSRF_ENABLED:false}
     allow-credentials: ${SECURITY_CORS_ALLOW_CREDENTIALS:false}
@@ -94,7 +94,7 @@ notask-flow:
   invite:
     default-expire-minutes: ${INVITE_DEFAULT_EXPIRE_MINUTES:30}
   collab:
-    internal-token: ${COLLAB_INTERNAL_TOKEN:notask-flow-collab-internal-change-me}
+    internal-token: ${COLLAB_INTERNAL_TOKEN}
     realtime-broadcast-url: ${COLLAB_REALTIME_BROADCAST_URL:http://localhost:8081/internal/broadcast}
   mail:
     from: ${NOTASK_MAIL_FROM:no-reply@notask-flow.local}

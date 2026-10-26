@@ -1,4 +1,6 @@
 package com.notaskflow.feature.file
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -211,8 +213,8 @@ fun FileBrowserRoute(
     pendingRestoreFile?.let { file ->
         AlertDialog(
             onDismissRequest = { pendingRestoreFile = null },
-            title = { Text("恢复文件") },
-            text = { Text("确定恢复“${file.displayName}”吗？") },
+            title = { Text(stringResource(R.string.file_restore_title)) },
+            text = { Text(stringResource(R.string.file_restore_confirm, file.displayName)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -220,12 +222,12 @@ fun FileBrowserRoute(
                         pendingRestoreFile = null
                     }
                 ) {
-                    Text("恢复")
+                    Text(stringResource(R.string.common_restore))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRestoreFile = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -234,8 +236,8 @@ fun FileBrowserRoute(
     pendingPhysicalDeleteFile?.let { file ->
         AlertDialog(
             onDismissRequest = { pendingPhysicalDeleteFile = null },
-            title = { Text("彻底删除文件") },
-            text = { Text("彻底删除“${file.displayName}”后无法恢复，确定继续吗？") },
+            title = { Text(stringResource(R.string.file_purge_title)) },
+            text = { Text(stringResource(R.string.file_purge_confirm, file.displayName)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -243,12 +245,12 @@ fun FileBrowserRoute(
                         pendingPhysicalDeleteFile = null
                     }
                 ) {
-                    Text("彻底删除")
+                    Text(stringResource(R.string.common_purge))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingPhysicalDeleteFile = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -259,7 +261,7 @@ fun FileBrowserRoute(
         val referenceCount = pending.second
         AlertDialog(
             onDismissRequest = { pendingDeleteFile = null },
-            title = { Text("删除文件") },
+            title = { Text(stringResource(R.string.file_delete_title)) },
             text = {
                 Text(
                     if (referenceCount > 0) {
@@ -276,12 +278,12 @@ fun FileBrowserRoute(
                         pendingDeleteFile = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteFile = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -318,8 +320,8 @@ fun FileBrowserRoute(
     pendingDeleteFolder?.let { folder ->
         AlertDialog(
             onDismissRequest = { pendingDeleteFolder = null },
-            title = { Text("删除文件夹") },
-            text = { Text("确定删除“${folder.name}”吗？文件夹内仍有内容时，后端可能会拒绝删除。") },
+            title = { Text(stringResource(R.string.file_delete_folder_title)) },
+            text = { Text(stringResource(R.string.file_delete_folder_confirm, folder.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -327,12 +329,12 @@ fun FileBrowserRoute(
                         pendingDeleteFolder = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteFolder = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -434,7 +436,7 @@ private fun FileTreeDrawerContent(
         TextButton(onClick = onCreateFolder, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("新建文件夹")
+            Text(stringResource(R.string.file_new_folder))
         }
     }
 }
@@ -907,7 +909,7 @@ private fun FolderMoveDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("移动“${folder.name}”") },
+        title = { Text(stringResource(R.string.file_move_title, folder.name)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -916,13 +918,13 @@ private fun FolderMoveDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 TextButton(onClick = { onMove(null) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("移动到根目录")
+                    Text(stringResource(R.string.file_move_to_root))
                 }
                 folders.flattenFolders()
                     .filterNot { candidate -> candidate.id == folder.id || folder.children.containsFolder(candidate.id) }
                     .forEach { candidate ->
                         TextButton(onClick = { onMove(candidate.id) }, modifier = Modifier.fillMaxWidth()) {
-                            Text("移动到 ${candidate.name}")
+                            Text(stringResource(R.string.file_move_to, candidate.name))
                         }
                     }
             }
@@ -930,7 +932,7 @@ private fun FolderMoveDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -945,7 +947,7 @@ private fun FileMoveDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("移动“${file.displayName}”") },
+        title = { Text(stringResource(R.string.file_move_title, file.displayName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -954,11 +956,11 @@ private fun FileMoveDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 TextButton(onClick = { onMove(null) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("移动到全部文件")
+                    Text(stringResource(R.string.file_move_to_all))
                 }
                 folders.flattenFolders().forEach { folder ->
                     TextButton(onClick = { onMove(folder.id) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("移动到 ${folder.name}")
+                        Text(stringResource(R.string.common_move_to_folder, folder.name))
                     }
                 }
             }
@@ -966,7 +968,7 @@ private fun FileMoveDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -995,12 +997,12 @@ private fun FileTextInputDialog(
         },
         confirmButton = {
             Button(onClick = onConfirm) {
-                Text("确认")
+                Text(stringResource(R.string.common_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -1046,7 +1048,7 @@ private fun EmptyFiles() {
             .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center
     ) {
-        Text("暂无文件", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.common_no_files), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -1180,10 +1182,10 @@ private fun FileListItem(
             }
             if (trashMode) {
                 TextButton(onClick = onRestore) {
-                    Text("恢复")
+                    Text(stringResource(R.string.common_restore))
                 }
                 TextButton(onClick = onPhysicalDelete) {
-                    Text("彻底删除", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.common_purge), color = MaterialTheme.colorScheme.error)
                 }
             } else {
                 IconButton(onClick = onRename) {

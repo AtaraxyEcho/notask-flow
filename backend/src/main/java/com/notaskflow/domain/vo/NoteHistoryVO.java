@@ -24,6 +24,8 @@ public class NoteHistoryVO {
 
     private String content;
 
+    private String contentHtml;
+
     private Integer version;
 
     private String changeSummary;

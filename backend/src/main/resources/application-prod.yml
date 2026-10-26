@@ -38,3 +38,9 @@ notask-flow:
 
 sa-token:
   jwt-secret-key: ${SA_TOKEN_JWT_SECRET}
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}

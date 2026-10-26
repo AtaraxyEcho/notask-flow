@@ -99,4 +99,219 @@
     <string name="auth_reset_success">密码已重置</string>
     <string name="auth_reset_failed">重置密码失败</string>
     <string name="auth_forgot_footer">重置完成后会自动返回登录页</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_account_security">账户安全</string>
+    <string name="settings_edit_profile">编辑资料</string>
+    <string name="settings_edit_profile_hint">昵称；头像点击上方头像修改</string>
+    <string name="settings_change_email">修改邮箱</string>
+    <string name="settings_change_email_hint">需要旧邮箱验证码确认</string>
+    <string name="settings_change_password">修改密码</string>
+    <string name="settings_change_password_hint">需要输入当前密码</string>
+    <string name="settings_preferences">偏好设置</string>
+    <string name="settings_theme_appearance">主题与外观</string>
+    <string name="settings_notification">通知偏好</string>
+    <string name="settings_notification_hint">任务、笔记、提及、系统通知</string>
+    <string name="settings_language">界面语言</string>
+    <string name="settings_other">其他</string>
+    <string name="settings_logout">退出登录</string>
+    <string name="settings_nickname">昵称</string>
+    <string name="settings_email">邮箱</string>
+    <string name="settings_email_readonly_hint">修改邮箱请在设置页使用「修改邮箱」功能，需旧邮箱验证码确认</string>
+    <string name="settings_save">保存</string>
+    <string name="settings_cancel">取消</string>
+    <string name="settings_confirm_change">确认修改</string>
+    <string name="settings_current_email">当前邮箱</string>
+    <string name="settings_new_email">新邮箱</string>
+    <string name="settings_email_code">验证码</string>
+    <string name="settings_current_password">当前密码</string>
+    <string name="settings_new_password">新密码</string>
+    <string name="settings_confirm_new_password">确认新密码</string>
+    <string name="settings_theme_mode">模式</string>
+    <string name="settings_personal_theme">个人主题</string>
+
+    <!-- 首页 -->
+    <string name="home_cover_desc">首页封面</string>
+    <string name="home_write_note">写笔记</string>
+    <string name="home_write_note_hint">记录灵感</string>
+    <string name="home_todo_card">待办事项</string>
+    <string name="home_todo_pending">%1$d 项未完成</string>
+    <string name="home_sync_issue">同步遇到问题</string>
+    <string name="home_recent_notes">最近笔记</string>
+    <string name="home_view_all">查看全部</string>
+    <string name="home_no_recent_notes">暂无最近笔记</string>
+    <string name="home_no_recent_notes_hint">写下第一条内容后会出现在这里</string>
+    <string name="home_pending_todos">未完成待办</string>
+    <string name="home_todos_cleared">待办已清空</string>
+    <string name="home_todos_cleared_hint">当前空间没有未完成事项</string>
+    <string name="home_create_team">新建团队</string>
+    <string name="home_join_team">加入团队</string>
+
+    <!-- 待办 -->
+    <string name="todo_search_placeholder">搜索待办</string>
+    <string name="todo_select_space_first">请先选择空间</string>
+    <string name="todo_empty">暂无待办</string>
+    <string name="todo_create_title">新建待办</string>
+    <string name="todo_edit_title">编辑待办</string>
+    <string name="todo_delete_title">删除待办</string>
+    <string name="todo_delete_confirm">确定删除“%1$s”吗？</string>
+    <string name="todo_title_label">待办标题</string>
+    <string name="todo_deadline_label">截止时间</string>
+
+    <!-- 通用/列表 -->
+    <string name="task_empty">暂无任务</string>
+    <string name="task_progress">进度</string>
+    <string name="note_empty">暂无笔记</string>
+    <string name="note_create_notebook">新建笔记本</string>
+    <string name="note_create">创建</string>
+    <string name="note_delete_title">删除笔记</string>
+    <string name="note_delete_confirm">确定删除“%1$s”吗？删除后将无法在当前列表中继续访问。</string>
+    <string name="note_delete_notebook_title">删除笔记本</string>
+    <string name="note_delete_notebook_confirm">确定删除“%1$s”吗？如果笔记本内仍有内容，后端可能会拒绝删除。</string>
+    <string name="note_all_notes">全部笔记</string>
+    <string name="common_select_space_first">请先选择空间</string>
+    <string name="common_delete">删除</string>
+    <string name="common_cancel">取消</string>
+
+    <!-- 成员 -->
+    <string name="members_empty">暂无成员</string>
+    <string name="members_remove_title">移除成员</string>
+    <string name="members_remove_confirm">确定将 %1$s 移出当前团队空间吗？该成员将无法继续访问团队内容。</string>
+    <string name="members_remove">移除</string>
+    <string name="members_approve_title">通过申请</string>
+    <string name="members_approve_confirm">确认通过 %1$s 的加入申请吗？</string>
+    <string name="members_approve">通过</string>
+    <string name="members_reject_title">拒绝申请</string>
+    <string name="members_reject_confirm">确认拒绝 %1$s 的加入申请吗？</string>
+    <string name="members_reject_reason">拒绝原因（选填）</string>
+    <string name="members_reject">拒绝</string>
+    <string name="members_join_role">加入角色</string>
+    <string name="members_invite_expire">有效期（分钟）</string>
+    <string name="members_copy_invite">复制邀请码</string>
+    <string name="members_fallback_user">该用户</string>
+
+    <!-- 项目 -->
+    <string name="project_tasks">项目任务</string>
+    <string name="project_no_tasks">暂无项目任务</string>
+    <string name="project_docs">项目文档</string>
+    <string name="project_no_docs">暂无项目文档</string>
+    <string name="project_members">项目成员</string>
+    <string name="project_no_members">暂无项目成员</string>
+    <string name="project_add_member">添加成员</string>
+    <string name="project_add_member_title">添加项目成员</string>
+    <string name="project_join">加入项目</string>
+    <string name="project_remove">移出项目</string>
+    <string name="project_close">关闭</string>
+    <string name="project_empty">暂无项目</string>
+    <string name="project_delete_title">删除项目</string>
+    <string name="project_delete_confirm">确定删除“%1$s”吗？如果项目下仍有关联任务或笔记，后端可能会拒绝本次删除。</string>
+
+    <!-- 统计/通知 -->
+    <string name="stats_member_load">成员负载</string>
+    <string name="stats_no_load">暂无负载数据</string>
+    <string name="stats_recent_activity">近期动态</string>
+    <string name="stats_no_activity">暂无动态</string>
+    <string name="stats_note_trend">笔记趋势</string>
+    <string name="stats_no_trend">暂无趋势数据</string>
+    <string name="stats_note_trend_7d">近 7 日笔记趋势</string>
+    <string name="notification_title">站内通知</string>
+    <string name="notification_empty">暂无通知</string>
+    <string name="notification_mark_all_read">全部已读</string>
+    <string name="notification_clear_read">清空已读</string>
+    <string name="notification_read">已读</string>
+
+    <!-- 文件 -->
+    <string name="file_restore_title">恢复文件</string>
+    <string name="file_restore_confirm">确定恢复“%1$s”吗？</string>
+    <string name="file_restore">恢复</string>
+    <string name="file_purge_title">彻底删除文件</string>
+    <string name="file_purge_confirm">彻底删除“%1$s”后无法恢复，确定继续吗？</string>
+    <string name="file_purge">彻底删除</string>
+    <string name="file_delete_title">删除文件</string>
+    <string name="file_delete_folder_title">删除文件夹</string>
+    <string name="file_delete_folder_confirm">确定删除“%1$s”吗？文件夹内仍有内容时，后端可能会拒绝删除。</string>
+    <string name="file_new_folder">新建文件夹</string>
+    <string name="file_move_title">移动“%1$s”</string>
+    <string name="file_move_to_root">移动到根目录</string>
+    <string name="file_move_to">移动到 %1$s</string>
+    <string name="file_move_to_all">移动到全部文件</string>
+
+    <!-- 任务 -->
+    <string name="task_member_duties">成员职责</string>
+    <string name="task_complete_duty">完成职责</string>
+    <string name="task_edit">编辑任务</string>
+    <string name="task_delete_title">删除任务</string>
+    <string name="task_delete_confirm">确定删除当前任务吗？相关评论、成员职责和附件引用也可能受到影响。</string>
+    <string name="task_claim_open">认领开放任务</string>
+    <string name="task_claim">认领</string>
+    <string name="task_start">开始</string>
+    <string name="task_complete">完成</string>
+    <string name="task_select_member">选择成员</string>
+    <string name="task_attachments">任务附件</string>
+    <string name="task_manage">管理</string>
+    <string name="task_no_attachments">当前任务暂无附件</string>
+    <string name="task_open">打开</string>
+    <string name="common_confirm">确认</string>
+    <string name="common_save">保存</string>
+    <string name="common_close">关闭</string>
+
+    <!-- 笔记编辑 -->
+    <string name="note_share">分享</string>
+    <string name="note_version_history">版本历史</string>
+    <string name="note_attachment_manage">附件管理</string>
+    <string name="note_paper_texture">设置纸张底纹</string>
+    <string name="note_export">导出</string>
+    <string name="note_generate_share_link">生成分享链接</string>
+    <string name="note_generate_link">生成链接</string>
+    <string name="note_permanent">长期有效</string>
+    <string name="note_share_link_generated">分享链接已生成</string>
+    <string name="note_got_it">知道了</string>
+    <string name="note_exit_edit_title">退出编辑？</string>
+    <string name="note_exit_edit_confirm">当前笔记还有未保存内容，退出后可能丢失最新修改。</string>
+    <string name="note_exit">退出</string>
+    <string name="note_continue_edit">继续编辑</string>
+    <string name="note_delete_confirm_short">确定删除当前笔记吗？删除后可在列表重新加载确认状态。</string>
+    <string name="note_open_attachment">打开附件</string>
+    <string name="note_open_attachment_confirm">是否打开“%1$s”？</string>
+    <string name="note_export_type_title">选择导出类型</string>
+
+    <!-- 通用动作 -->
+    <string name="common_restore">恢复</string>
+    <string name="common_purge">彻底删除</string>
+    <string name="common_approve">通过</string>
+    <string name="common_reject">拒绝</string>
+    <string name="common_generate">生成</string>
+    <string name="common_done">完成</string>
+    <string name="common_member_role">成员角色</string>
+    <string name="common_remove_member">移除成员</string>
+    <string name="common_no_files">暂无文件</string>
+    <string name="common_move_to_folder">移动到 %1$s</string>
+
+    <!-- 收尾 -->
+    <string name="note_export_done">导出完成</string>
+    <string name="note_insert_table">插入表格</string>
+    <string name="note_attachment_ref">附件引用</string>
+    <string name="note_no_ref_files">暂无可引用文件</string>
+    <string name="note_no_history">暂无历史版本</string>
+    <string name="note_no_attachments">当前笔记暂无附件</string>
+    <string name="common_create">创建</string>
+    <string name="common_edit_action">编辑</string>
+
+    <!-- 最终收尾 -->
+    <string name="common_next">下一步</string>
+    <string name="common_pick_time">选择时间</string>
+    <string name="common_ok">确定</string>
+    <string name="common_start">开始</string>
+    <string name="common_end">结束</string>
+    <string name="common_retry">重试</string>
+    <string name="common_search_action">搜索</string>
+    <string name="file_open_file">打开文件</string>
+    <string name="settings_save_period">保存时段</string>
+    <string name="space_submit_join">提交加入申请</string>
+    <string name="search_global">全局搜索</string>
+    <string name="task_create_title">新建任务</string>
+    <string name="task_project">归属项目</string>
+    <string name="task_no_project">不关联项目</string>
+    <string name="task_assign_members">指派成员</string>
 </resources>

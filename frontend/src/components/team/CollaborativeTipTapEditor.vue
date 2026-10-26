@@ -174,6 +174,8 @@ let removeStatusListener: (() => void) | null = null
 let removeSyncedListener: (() => void) | null = null
 let removeBootstrapListener: (() => void) | null = null
 let persistPromise: Promise<void> | null = null
+
+let hasPendingEdits = false
 let isUnmounting = false
 
 const localPresenceUser = computed(() => resolvePresenceUser(userStore.profile))
@@ -299,6 +301,9 @@ const performPersistContent = async (forceCheckpoint = false) => {
     contentHtml,
   })
 
+  collabProvider.value?.sendContentSnapshot(content, contentHtml)
+  hasPendingEdits = false
+
   if (isUnmounting) {
     return
   }
@@ -350,6 +355,8 @@ const scheduleSave = () => {
     return
   }
 
+  hasPendingEdits = true
+
   if (saveTimer) {
     window.clearTimeout(saveTimer)
   }
@@ -358,6 +365,55 @@ const scheduleSave = () => {
     saveTimer = null
     persistContent().catch(handlePersistFailure)
   }, AUTO_SAVE_DELAY_MS)
+}
+
+/**
+ * 页面关闭或切到后台时，使用 keepalive 请求兜底落盘，避免未保存内容丢失。
+ */
+const flushPendingOnUnload = () => {
+  if (!props.canEdit || !hasPendingEdits) {
+    return
+  }
+
+  const contentHtml = sanitizeEditorHtml(editorHtml.value)
+  const content = htmlToText(contentHtml)
+  const apiBase = resolveApiBaseUrl()
+  const token = userStore.tokenValue
+  if (!token) {
+    return
+  }
+
+  try {
+    void fetch(`${apiBase}/spaces/${props.spaceId}/notes/${props.noteId}/collab-content`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content, contentHtml }),
+      keepalive: true,
+    })
+    collabProvider.value?.sendContentSnapshot(content, contentHtml)
+    hasPendingEdits = false
+  } catch {
+    // 页面卸载阶段无法可靠处理错误，静默忽略
+  }
+}
+
+/**
+ * 解析 API 基础地址。
+ *
+ * @returns API 基础地址
+ */
+function resolveApiBaseUrl() {
+  const androidBaseUrl = window.sessionStorage.getItem('notask-flow-android-api-base-url')?.trim()
+  return androidBaseUrl || import.meta.env.VITE_API_BASE_URL
+}
+
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'hidden') {
+    flushPendingOnUnload()
+  }
 }
 
 const createCollabProvider = () =>
@@ -485,6 +541,9 @@ watch(
 )
 
 onMounted(() => {
+  window.addEventListener('beforeunload', flushPendingOnUnload)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
   if (!props.canEdit) {
     return
   }
@@ -493,6 +552,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', flushPendingOnUnload)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  flushPendingOnUnload()
   isUnmounting = true
   if (saveTimer) {
     window.clearTimeout(saveTimer)

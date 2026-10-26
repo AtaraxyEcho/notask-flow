@@ -1,15 +1,19 @@
 package com.notaskflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.notaskflow.common.enums.BusinessType;
+import com.notaskflow.common.enums.SearchIndexOperation;
 import com.notaskflow.common.enums.SpaceRealtimeEventType;
 import com.notaskflow.domain.dto.request.NotebookSaveRequest;
 import com.notaskflow.domain.entity.Note;
 import com.notaskflow.domain.entity.NoteHistory;
 import com.notaskflow.domain.entity.Notebook;
 import com.notaskflow.domain.vo.NotebookVO;
+import com.notaskflow.event.SearchIndexRequestedEvent;
 import com.notaskflow.exception.BusinessException;
 import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.exception.ResourceNotFoundException;
+import com.notaskflow.mapper.BusinessAttachmentMapper;
 import com.notaskflow.mapper.NoteHistoryMapper;
 import com.notaskflow.mapper.NoteMapper;
 import com.notaskflow.mapper.NoteTagMapper;
@@ -27,6 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,9 +53,13 @@ public class NotebookServiceImpl implements NotebookService {
 
     private final NoteTagMapper noteTagMapper;
 
+    private final BusinessAttachmentMapper businessAttachmentMapper;
+
     private final PermissionValidator permissionValidator;
 
     private final SpaceRealtimeEventService spaceRealtimeEventService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 查询空间内的笔记本树。
@@ -173,7 +182,10 @@ public class NotebookServiceImpl implements NotebookService {
         if (!noteIds.isEmpty()) {
             noteHistoryMapper.delete(Wrappers.<NoteHistory>lambdaQuery().in(NoteHistory::getNoteId, noteIds));
             noteTagMapper.physicalDeleteByNoteIds(noteIds);
+            businessAttachmentMapper.physicalDeleteByBusinessIds(BusinessType.NOTE, noteIds);
             noteMapper.deleteBatchIds(noteIds);
+            noteIds.forEach(noteId -> applicationEventPublisher.publishEvent(
+                    new SearchIndexRequestedEvent(noteId, SearchIndexOperation.DELETE)));
         }
         notebookMapper.deleteBatchIds(notebookIds);
         spaceRealtimeEventService.publish(spaceId, SpaceRealtimeEventType.DOCUMENT_TREE_CHANGED,

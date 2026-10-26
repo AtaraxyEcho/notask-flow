@@ -17,6 +17,7 @@ import com.notaskflow.mapper.UserMapper;
 import com.notaskflow.service.MailNotificationService;
 import com.notaskflow.service.UserService;
 import com.notaskflow.storage.MinioStorageService;
+import com.notaskflow.utils.SqlLikeUtils;
 import com.notaskflow.utils.AvatarUrlUtil;
 import com.notaskflow.utils.LoginUserUtil;
 import com.notaskflow.utils.RedisUtil;
@@ -50,6 +51,15 @@ public class UserServiceImpl implements UserService {
     private static final int EMAIL_CHANGE_CODE_LENGTH = 6;
 
     private static final int EMAIL_CODE_RATE_LIMIT = 5;
+
+    /** 邮箱验证码单次有效期内的最大校验失败次数。 */
+    private static final int EMAIL_CODE_MAX_VERIFY_FAILURES = 5;
+
+    /** 头像对象存储目录前缀。 */
+    private static final String AVATAR_OBJECT_PREFIX = "avatars/";
+
+    /** 邮箱验证码校验失败计数窗口。 */
+    private static final Duration EMAIL_CODE_VERIFY_FAILURE_WINDOW = Duration.ofMinutes(30);
 
     private static final Duration EMAIL_CHANGE_CODE_TTL = Duration.ofMinutes(10);
 
@@ -91,9 +101,6 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "修改邮箱请先完成旧邮箱验证码校验");
         }
-        if (StringUtils.hasText(request.getAvatarUrl())) {
-            user.setAvatarUrl(request.getAvatarUrl());
-        }
         userMapper.updateById(user);
         log.info("用户资料更新完成，userId={}", user.getId());
         return toUserProfileVO(user);
@@ -123,6 +130,7 @@ public class UserServiceImpl implements UserService {
         String code = StringGenerator.randomNumeric(EMAIL_CHANGE_CODE_LENGTH);
         String codeKey = buildEmailChangeCodeKey(user.getId(), newEmail);
         redisUtil.delete(codeKey);
+        redisUtil.delete(RedisKeyConstants.emailCodeVerifyFail("email-change", user.getId() + ":" + newEmail));
         redisUtil.set(codeKey, code, EMAIL_CHANGE_CODE_TTL);
 
         boolean mailSent = mailNotificationService.sendEmailChangeCodeMail(user.getEmail(), code, newEmail);
@@ -148,16 +156,49 @@ public class UserServiceImpl implements UserService {
         ensureEmailCanBeChanged(user, newEmail);
 
         String codeKey = buildEmailChangeCodeKey(user.getId(), newEmail);
+        String failKey = RedisKeyConstants.emailCodeVerifyFail("email-change", user.getId() + ":" + newEmail);
+        ensureEmailCodeAttemptAllowed(failKey, codeKey);
         String cachedCode = redisUtil.getString(codeKey);
         if (!StringUtils.hasText(cachedCode) || !cachedCode.equals(request.getCode().trim())) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "验证码错误或已过期");
+            recordEmailCodeFailure(failKey, codeKey);
         }
 
         user.setEmail(newEmail);
         userMapper.updateById(user);
         redisUtil.delete(codeKey);
+        redisUtil.delete(failKey);
         log.info("用户邮箱修改完成，userId={}, newEmail={}", user.getId(), newEmail);
         return toUserProfileVO(user);
+    }
+
+    /**
+     * 校验邮箱验证码前检查失败次数，超出上限后销毁验证码。
+     *
+     * @param failKey 失败计数键
+     * @param codeKey 验证码键
+     */
+    private void ensureEmailCodeAttemptAllowed(String failKey, String codeKey) {
+        Long failures = redisUtil.getLong(failKey);
+        if (failures != null && failures >= EMAIL_CODE_MAX_VERIFY_FAILURES) {
+            redisUtil.delete(codeKey);
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "验证码错误次数过多，请重新获取验证码");
+        }
+    }
+
+    /**
+     * 记录一次邮箱验证码校验失败，达到上限时销毁验证码。
+     *
+     * @param failKey 失败计数键
+     * @param codeKey 验证码键
+     */
+    private void recordEmailCodeFailure(String failKey, String codeKey) {
+        long failures = redisUtil.recordFailure(failKey, EMAIL_CODE_VERIFY_FAILURE_WINDOW);
+        if (failures >= EMAIL_CODE_MAX_VERIFY_FAILURES) {
+            redisUtil.delete(codeKey);
+            redisUtil.delete(failKey);
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "验证码错误次数过多，请重新获取验证码");
+        }
+        throw new BusinessException(ErrorCode.PARAM_ERROR, "验证码错误或已过期");
     }
 
     /**
@@ -225,13 +266,33 @@ public class UserServiceImpl implements UserService {
     }
 
     private void writeAvatar(User user, OutputStream outputStream) throws IOException {
+        String objectName = resolveOwnedAvatarObjectName(user);
+        try (InputStream inputStream = minioStorageService.openObject(objectName)) {
+            inputStream.transferTo(outputStream);
+        }
+    }
+
+    /**
+     * 校验头像对象归属当前用户并返回规范化对象路径。
+     *
+     * <p>头像只能读取 {@code avatars/{userId}/} 目录下的对象，防止通过伪造 {@code avatarUrl}
+     * 越权读取其他空间的私有文件。</p>
+     *
+     * @param user 用户实体
+     * @return 头像对象路径
+     */
+    private String resolveOwnedAvatarObjectName(User user) {
         String avatarUrl = user.getAvatarUrl();
         if (!StringUtils.hasText(avatarUrl)) {
             throw new ResourceNotFoundException("头像不存在");
         }
-        try (InputStream inputStream = minioStorageService.openObject(avatarUrl)) {
-            inputStream.transferTo(outputStream);
+        String objectName = avatarUrl.trim();
+        String expectedPrefix = AVATAR_OBJECT_PREFIX + user.getId() + "/";
+        if (!objectName.startsWith(expectedPrefix) || objectName.contains("..")) {
+            log.warn("检测到非法头像对象路径，已拒绝读取，userId={}", user.getId());
+            throw new ResourceNotFoundException("头像不存在");
         }
+        return objectName;
     }
 
     /**
@@ -243,10 +304,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public String avatarContentType(Long userId) {
         User user = userMapper.selectById(userId);
-        if (user == null || !StringUtils.hasText(user.getAvatarUrl())) {
+        if (user == null) {
             return MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
-        return minioStorageService.statObject(user.getAvatarUrl()).contentType();
+        String objectName;
+        try {
+            objectName = resolveOwnedAvatarObjectName(user);
+        } catch (ResourceNotFoundException exception) {
+            return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+        return minioStorageService.statObject(objectName).contentType();
     }
 
     /**
@@ -263,11 +330,11 @@ public class UserServiceImpl implements UserService {
         String normalizedKeyword = keyword.trim();
         Page<User> page = new Page<>(1, 20, false);
         return userMapper.selectPage(page, Wrappers.<User>lambdaQuery()
-                        .and(wrapper -> wrapper.like(User::getUsername, normalizedKeyword)
+                        .and(wrapper -> wrapper.like(User::getUsername, SqlLikeUtils.escape(normalizedKeyword))
                                 .or()
-                                .like(User::getNickname, normalizedKeyword)
+                                .like(User::getNickname, SqlLikeUtils.escape(normalizedKeyword))
                                 .or()
-                                .like(User::getEmail, normalizedKeyword)))
+                                .like(User::getEmail, SqlLikeUtils.escape(normalizedKeyword))))
                 .getRecords()
                 .stream()
                 .map(this::toUserOptionVO)

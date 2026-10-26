@@ -1,5 +1,7 @@
 package com.notaskflow.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.notaskflow.common.PageResponse;
@@ -55,6 +57,7 @@ import com.notaskflow.service.SpaceRealtimeEventService;
 import com.notaskflow.storage.MinioStorageService;
 import com.notaskflow.utils.LoginUserUtil;
 import com.notaskflow.utils.RedisUtil;
+import com.notaskflow.utils.SqlLikeUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,7 +77,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -173,21 +178,117 @@ public class FileManagementServiceImpl implements FileManagementService {
     public PageResponse<ManagedFileVO> page(Long spaceId, ManagedFileQuery query) {
         ensureFileManager(spaceId);
         ManagedFileQuery safeQuery = query == null ? new ManagedFileQuery() : query;
-        Optional<List<Long>> searchedFileIds = searchFileIds(spaceId, safeQuery);
-        boolean searchIndexApplied = searchedFileIds.isPresent();
-        List<ManagedFileVO> filtered = selectManagedFiles(spaceId, safeQuery, searchedFileIds)
-                .stream()
-                .map(file -> toVO(file, false))
-                .filter(file -> matchesMetadataQuery(file, safeQuery))
-                .filter(file -> searchIndexApplied || matchesKeyword(file, safeQuery))
-                .toList();
         long pageNum = safeQuery.safePageNum();
         long pageSize = safeQuery.safePageSize();
-        int fromIndex = (int) Math.min(filtered.size(), (pageNum - 1) * pageSize);
-        int toIndex = (int) Math.min(filtered.size(), fromIndex + pageSize);
         Page<ManagedFile> page = new Page<>(pageNum, pageSize);
-        page.setTotal(filtered.size());
-        return PageResponse.of(page, filtered.subList(fromIndex, toIndex));
+        Optional<List<Long>> searchedFileIds = searchFileIds(spaceId, safeQuery);
+        if (searchedFileIds.isPresent() && searchedFileIds.get().isEmpty()) {
+            page.setTotal(0L);
+            return PageResponse.of(page, Collections.emptyList());
+        }
+        LambdaQueryWrapper<ManagedFile> wrapper = buildFilePageWrapper(spaceId, safeQuery, searchedFileIds);
+        if (wrapper == null) {
+            page.setTotal(0L);
+            return PageResponse.of(page, Collections.emptyList());
+        }
+        IPage<ManagedFile> result = managedFileMapper.selectPage(page, wrapper);
+        return PageResponse.of(page, toVOList(result.getRecords()));
+    }
+
+    /**
+     * 构造文件分页查询条件，所有过滤条件均下推到数据库执行。
+     *
+     * @param spaceId 空间标识
+     * @param query 查询条件
+     * @param searchedFileIds 全文检索命中的文件标识
+     * @return 查询条件，命中结果为空时返回 null
+     */
+    private LambdaQueryWrapper<ManagedFile> buildFilePageWrapper(Long spaceId, ManagedFileQuery query,
+                                                                Optional<List<Long>> searchedFileIds) {
+        LambdaQueryWrapper<ManagedFile> wrapper = Wrappers.<ManagedFile>lambdaQuery()
+                .eq(ManagedFile::getSpaceId, spaceId)
+                .eq(query.getTrashed() != null, ManagedFile::getTrashed, query.getTrashed())
+                .eq(query.getFolderId() != null && !hasGlobalFileQuery(query),
+                        ManagedFile::getFolderId,
+                        normalizeFolderId(query.getFolderId()));
+        if (searchedFileIds.isPresent()) {
+            wrapper.in(ManagedFile::getId, searchedFileIds.get());
+        } else if (StringUtils.hasText(query.getKeyword())) {
+            String escapedKeyword = SqlLikeUtils.escape(query.getKeyword());
+            List<Long> attachmentIds = findAttachmentIdsByKeyword(escapedKeyword);
+            wrapper.and(nested -> {
+                nested.like(ManagedFile::getDisplayName, escapedKeyword);
+                if (!attachmentIds.isEmpty()) {
+                    nested.or().in(ManagedFile::getAttachmentId, attachmentIds);
+                }
+            });
+        }
+        if (StringUtils.hasText(query.getMimeType())) {
+            List<Long> attachmentIds = attachmentMapper.selectList(Wrappers.<Attachment>lambdaQuery()
+                            .select(Attachment::getId)
+                            .like(Attachment::getMimeType, SqlLikeUtils.escape(query.getMimeType())))
+                    .stream()
+                    .map(Attachment::getId)
+                    .toList();
+            if (attachmentIds.isEmpty()) {
+                return null;
+            }
+            wrapper.in(ManagedFile::getAttachmentId, attachmentIds);
+        }
+        if (query.getUploaderId() != null) {
+            List<Long> attachmentIds = attachmentMapper.selectList(Wrappers.<Attachment>lambdaQuery()
+                            .select(Attachment::getId)
+                            .eq(Attachment::getUploaderId, query.getUploaderId()))
+                    .stream()
+                    .map(Attachment::getId)
+                    .toList();
+            if (attachmentIds.isEmpty()) {
+                return null;
+            }
+            wrapper.in(ManagedFile::getAttachmentId, attachmentIds);
+        }
+        wrapper.orderByDesc(ManagedFile::getGmtModified);
+        return wrapper;
+    }
+
+    /**
+     * 查询文件名匹配关键字的附件标识。
+     *
+     * @param escapedKeyword 已转义的关键字
+     * @return 附件标识列表
+     */
+    private List<Long> findAttachmentIdsByKeyword(String escapedKeyword) {
+        return attachmentMapper.selectList(Wrappers.<Attachment>lambdaQuery()
+                        .select(Attachment::getId)
+                        .like(Attachment::getFileName, escapedKeyword))
+                .stream()
+                .map(Attachment::getId)
+                .toList();
+    }
+
+    /**
+     * 批量转换文件视图对象，避免逐条查询附件造成 N+1。
+     *
+     * @param managedFiles 文件实体列表
+     * @return 文件视图列表
+     */
+    private List<ManagedFileVO> toVOList(List<ManagedFile> managedFiles) {
+        if (managedFiles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<Long> attachmentIds = managedFiles.stream()
+                .map(ManagedFile::getAttachmentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Attachment> attachmentMap = attachmentIds.isEmpty()
+                ? Map.of()
+                : attachmentMapper.selectBatchIds(attachmentIds).stream()
+                        .collect(Collectors.toMap(Attachment::getId, Function.identity(), (left, right) -> left));
+        List<ManagedFileVO> list = new ArrayList<>(managedFiles.size());
+        for (ManagedFile managedFile : managedFiles) {
+            list.add(toVO(managedFile, attachmentMap.get(managedFile.getAttachmentId()), false));
+        }
+        return list;
     }
 
     /**
@@ -992,6 +1093,18 @@ public class FileManagementServiceImpl implements FileManagementService {
 
     private ManagedFileVO toVO(ManagedFile managedFile, boolean includeUrl) {
         Attachment attachment = attachmentMapper.selectById(managedFile.getAttachmentId());
+        return toVO(managedFile, attachment, includeUrl);
+    }
+
+    /**
+     * 转换文件视图对象。
+     *
+     * @param managedFile 文件实体
+     * @param attachment 预加载的附件实体
+     * @param includeUrl 是否生成下载地址
+     * @return 文件视图对象
+     */
+    private ManagedFileVO toVO(ManagedFile managedFile, Attachment attachment, boolean includeUrl) {
         String downloadUrl = includeUrl && attachment != null
                 ? minioStorageService.presignedDownloadUrl(attachment.getStoragePath())
                 : null;

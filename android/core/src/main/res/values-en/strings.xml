@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_note">Notes</string>
+    <string name="nav_task">Tasks</string>
+    <string name="nav_todo">To-dos</string>
+    <string name="nav_file">Files</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_document">Docs</string>
+    <string name="nav_project">Projects</string>
+    <string name="nav_members">Members</string>
+
+    <!-- Common -->
+    <string name="common_back">Back</string>
+    <string name="common_search">Search</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_settings">Settings</string>
+    <string name="common_not_recorded">Not recorded</string>
+    <string name="common_retry">Retry</string>
+    <string name="home_create_team">New team</string>
+    <string name="home_join_team">Join team</string>
+</resources>

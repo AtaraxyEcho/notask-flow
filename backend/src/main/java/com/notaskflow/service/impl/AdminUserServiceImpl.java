@@ -21,6 +21,7 @@ import com.notaskflow.service.LoginSessionService;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.notaskflow.utils.SqlLikeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -152,11 +153,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(query.getKeyword())) {
             String keyword = query.getKeyword().trim();
-            wrapper.and(nested -> nested.like(User::getUsername, keyword)
+            wrapper.and(nested -> nested.like(User::getUsername, SqlLikeUtils.escape(keyword))
                     .or()
-                    .like(User::getNickname, keyword)
+                    .like(User::getNickname, SqlLikeUtils.escape(keyword))
                     .or()
-                    .like(User::getEmail, keyword));
+                    .like(User::getEmail, SqlLikeUtils.escape(keyword)));
         }
         if (query.getStatus() != null) {
             wrapper.eq(User::getStatus, query.getStatus());

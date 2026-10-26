@@ -10,8 +10,10 @@ import com.notaskflow.common.enums.SpaceRealtimeEventType;
 import com.notaskflow.common.enums.SpaceType;
 import com.notaskflow.common.enums.TaskStatus;
 import com.notaskflow.domain.dto.request.ProjectArchiveRequest;
+import com.notaskflow.domain.dto.request.ProjectDeleteRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberRoleUpdateRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberSaveRequest;
+import com.notaskflow.domain.dto.request.ProjectRelationStrategy;
 import com.notaskflow.domain.dto.request.ProjectSaveRequest;
 import com.notaskflow.domain.entity.Note;
 import com.notaskflow.domain.entity.Project;
@@ -39,6 +41,7 @@ import com.notaskflow.security.PermissionValidator;
 import com.notaskflow.service.ProjectService;
 import com.notaskflow.service.SpaceRealtimeEventService;
 import com.notaskflow.storage.MinioStorageService;
+import com.notaskflow.utils.SqlLikeUtils;
 import com.notaskflow.utils.AvatarUrlUtil;
 import com.notaskflow.utils.LoginUserUtil;
 import java.time.LocalDateTime;
@@ -101,9 +104,9 @@ public class ProjectServiceImpl implements ProjectService {
                 .eq(Project::getSpaceId, spaceId)
                 .eq(query.getArchived() != null, Project::getArchived, query.getArchived())
                 .and(StringUtils.hasText(query.getKeyword()), condition -> condition.like(Project::getName,
-                        query.getKeyword().trim())
+                        SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(Project::getDescription, query.getKeyword().trim()))
+                        .like(Project::getDescription, SqlLikeUtils.escape(query.getKeyword())))
                 .orderByDesc(Project::getGmtModified);
         IPage<Project> result = projectMapper.selectPage(page, wrapper);
         List<ProjectVO> list = result.getRecords().stream().map(this::toProjectVO).toList();
@@ -233,19 +236,111 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long spaceId, Long projectId) {
+        delete(spaceId, projectId, null);
+    }
+
+    /**
+     * 删除项目并按指定策略处理关联任务与文档。
+     *
+     * @param spaceId 空间标识
+     * @param projectId 项目标识
+     * @param request 关联数据处理策略，为空时默认解除关联
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Long spaceId, Long projectId, ProjectDeleteRequest request) {
         Long currentUserId = LoginUserUtil.currentUserId();
         Project project = findProject(spaceId, projectId);
         ensureProjectOwnerOrSpaceAdmin(project, currentUserId);
-        taskMapper.update(null, Wrappers.<Task>lambdaUpdate()
-                .eq(Task::getProjectId, projectId)
-                .set(Task::getProjectId, null));
-        noteMapper.update(null, Wrappers.<Note>lambdaUpdate()
-                .eq(Note::getProjectId, projectId)
-                .set(Note::getProjectId, null));
+
+        ProjectRelationStrategy taskStrategy = ProjectRelationStrategy.normalize(
+                request == null ? null : request.getTaskStrategy());
+        ProjectRelationStrategy docStrategy = ProjectRelationStrategy.normalize(
+                request == null ? null : request.getDocStrategy());
+        applyTaskStrategy(spaceId, projectId, taskStrategy, request == null ? null : request.getTaskTargetProjectId());
+        applyNoteStrategy(spaceId, projectId, docStrategy, request == null ? null : request.getDocTargetProjectId());
+
         projectMemberMapper.delete(Wrappers.<ProjectMember>lambdaQuery().eq(ProjectMember::getProjectId, projectId));
         projectMapper.deleteById(projectId);
-        log.info("项目删除完成，spaceId={}，projectId={}，operatorId={}", spaceId, projectId, currentUserId);
+        log.info("项目删除完成，spaceId={}，projectId={}，taskStrategy={}，docStrategy={}，operatorId={}",
+                spaceId, projectId, taskStrategy, docStrategy, currentUserId);
         publishProjectRealtimeEvent(spaceId, SpaceRealtimeEventType.PROJECT_DELETED, project);
+    }
+
+    /**
+     * 按策略处理项目关联任务。
+     *
+     * @param spaceId 空间标识
+     * @param projectId 项目标识
+     * @param strategy 处理策略
+     * @param targetProjectId 目标项目标识
+     */
+    private void applyTaskStrategy(Long spaceId, Long projectId, ProjectRelationStrategy strategy,
+                                   Long targetProjectId) {
+        switch (strategy) {
+            case TRANSFER -> {
+                Long resolvedTarget = validateTransferTarget(spaceId, projectId, targetProjectId, "任务");
+                taskMapper.update(null, Wrappers.<Task>lambdaUpdate()
+                        .eq(Task::getProjectId, projectId)
+                        .set(Task::getProjectId, resolvedTarget));
+            }
+            case DELETE -> taskMapper.delete(Wrappers.<Task>lambdaQuery().eq(Task::getProjectId, projectId));
+            case UNLINK -> taskMapper.update(null, Wrappers.<Task>lambdaUpdate()
+                    .eq(Task::getProjectId, projectId)
+                    .set(Task::getProjectId, null));
+            default -> throw new BusinessException(ErrorCode.PARAM_ERROR, "不支持的任务关联处理策略");
+        }
+    }
+
+    /**
+     * 按策略处理项目关联文档。
+     *
+     * @param spaceId 空间标识
+     * @param projectId 项目标识
+     * @param strategy 处理策略
+     * @param targetProjectId 目标项目标识
+     */
+    private void applyNoteStrategy(Long spaceId, Long projectId, ProjectRelationStrategy strategy,
+                                   Long targetProjectId) {
+        switch (strategy) {
+            case TRANSFER -> {
+                Long resolvedTarget = validateTransferTarget(spaceId, projectId, targetProjectId, "文档");
+                noteMapper.update(null, Wrappers.<Note>lambdaUpdate()
+                        .eq(Note::getProjectId, projectId)
+                        .set(Note::getProjectId, resolvedTarget));
+            }
+            case DELETE -> noteMapper.delete(Wrappers.<Note>lambdaQuery().eq(Note::getProjectId, projectId));
+            case UNLINK -> noteMapper.update(null, Wrappers.<Note>lambdaUpdate()
+                    .eq(Note::getProjectId, projectId)
+                    .set(Note::getProjectId, null));
+            default -> throw new BusinessException(ErrorCode.PARAM_ERROR, "不支持的文档关联处理策略");
+        }
+    }
+
+    /**
+     * 校验转移目标项目可用性。
+     *
+     * @param spaceId 空间标识
+     * @param projectId 待删除项目标识
+     * @param targetProjectId 目标项目标识
+     * @param resourceLabel 资源名称，用于错误提示
+     * @return 校验通过的目标项目标识
+     */
+    private Long validateTransferTarget(Long spaceId, Long projectId, Long targetProjectId, String resourceLabel) {
+        if (targetProjectId == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, resourceLabel + "转移必须指定目标项目");
+        }
+        if (projectId.equals(targetProjectId)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, resourceLabel + "不能转移到待删除项目");
+        }
+        Project target = projectMapper.selectOne(Wrappers.<Project>lambdaQuery()
+                .eq(Project::getSpaceId, spaceId)
+                .eq(Project::getId, targetProjectId)
+                .eq(Project::getArchived, false));
+        if (target == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, resourceLabel + "目标项目不存在或已归档");
+        }
+        return targetProjectId;
     }
 
     /**

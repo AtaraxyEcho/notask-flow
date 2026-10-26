@@ -7,6 +7,7 @@ interface UiState {
   sidebarMode: SidebarMode
   globalSearchOpen: boolean
   pageLoading: boolean
+  mobileNavOpen: boolean
 }
 
 export const useUiStore = defineStore('ui', {
@@ -16,6 +17,7 @@ export const useUiStore = defineStore('ui', {
     sidebarMode: 'expanded',
     globalSearchOpen: false,
     pageLoading: false,
+    mobileNavOpen: false,
   }),
   actions: {
     setThemeMode(mode: ThemeMode) {
@@ -32,6 +34,9 @@ export const useUiStore = defineStore('ui', {
     },
     setPageLoading(value: boolean) {
       this.pageLoading = value
+    },
+    setMobileNavOpen(value: boolean) {
+      this.mobileNavOpen = value
     },
     applySettings(settings: Partial<NotificationSetting>) {
       if (settings.themeMode) {

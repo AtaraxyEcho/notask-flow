@@ -254,8 +254,9 @@
               <div class="flex flex-wrap items-center gap-3">
                 <el-select
                   :model-value="member.role"
-                  class="w-[150px] project-member-role-readonly"
-                  disabled
+                  class="w-[150px]"
+                  :disabled="!canManageProject || member.role === 'OWNER'"
+                  @change="(value: string) => updateMemberRole(member.userId, value)"
                 >
                   <el-option :label="t('projectDetail.roleOwner')" value="OWNER" />
                   <el-option :label="t('projectDetail.roleMember')" value="MEMBER" />
@@ -433,6 +434,7 @@ import { useI18n } from '@/i18n'
 import { useNoteStore } from '@/stores/note'
 import { useProjectStore } from '@/stores/project'
 import { useSpaceStore } from '@/stores/space'
+import { useUserStore } from '@/stores/user'
 import type { Note, Notebook, ProjectMember, SpaceMember, Task, TaskPriority, TaskStatus } from '@/types/app'
 import { formatDateTime, toTimestamp } from '@/utils/date'
 import { renderMarkdownLite } from '@/utils/markdown'
@@ -505,6 +507,23 @@ const deleteOptions = reactive({
   taskTargetProjectId: undefined as number | undefined,
   docStrategy: 'transfer' as 'transfer' | 'unlink' | 'delete',
   docTargetProjectId: undefined as number | undefined,
+})
+
+const userStore = useUserStore()
+const canManageProject = computed(() => {
+  const currentProject = projectStore.currentProject
+  if (!currentProject) {
+    return false
+  }
+  const currentUserId = userStore.profile?.id
+  if (!currentUserId) {
+    return false
+  }
+  if (currentProject.ownerUserId === currentUserId) {
+    return true
+  }
+  const currentMember = spaceStore.members.find((member) => member.userId === currentUserId)
+  return currentMember?.roleCode === 'SPACE_OWNER' || currentMember?.roleCode === 'SPACE_ADMIN'
 })
 
 const completionRate = computed(() => projectStore.currentProject?.completionRate ?? 0)
@@ -942,40 +961,12 @@ const deleteProjectWithRelations = async () => {
 
   deletingProject.value = true
   try {
-    await Promise.all(
-      tasks.map((task) => {
-        if (deleteOptions.taskStrategy === 'delete') {
-          return taskService.delete(spaceStore.currentSpaceId as number, task.id)
-        }
-
-        return taskService.update(spaceStore.currentSpaceId as number, task.id, {
-          title: task.title,
-          description: task.description,
-          priority: task.priority,
-          deadline: task.deadline,
-          projectId: deleteOptions.taskStrategy === 'transfer' ? deleteOptions.taskTargetProjectId : undefined,
-        })
-      }),
-    )
-
-    await Promise.all(
-      notes.map((note) => {
-        if (deleteOptions.docStrategy === 'delete') {
-          return noteService.delete(spaceStore.currentSpaceId as number, note.id)
-        }
-
-        return noteService.update(spaceStore.currentSpaceId as number, note.id, {
-          title: note.title,
-          notebookId: note.notebookId,
-          projectId: deleteOptions.docStrategy === 'transfer' ? deleteOptions.docTargetProjectId : undefined,
-          content: note.content,
-          contentHtml: note.contentHtml,
-          tagIds: note.tags?.map((tag) => tag.id),
-        })
-      }),
-    )
-
-    await projectStore.deleteProject(projectStore.currentProject.id)
+    await projectStore.deleteProject(projectStore.currentProject.id, {
+      taskStrategy: deleteOptions.taskStrategy === 'transfer' ? 'TRANSFER' : deleteOptions.taskStrategy === 'delete' ? 'DELETE' : 'UNLINK',
+      taskTargetProjectId: deleteOptions.taskStrategy === 'transfer' ? deleteOptions.taskTargetProjectId : undefined,
+      docStrategy: deleteOptions.docStrategy === 'transfer' ? 'TRANSFER' : deleteOptions.docStrategy === 'delete' ? 'DELETE' : 'UNLINK',
+      docTargetProjectId: deleteOptions.docStrategy === 'transfer' ? deleteOptions.docTargetProjectId : undefined,
+    })
     settingsDrawerOpen.value = false
     await router.push('/app/projects')
   } finally {

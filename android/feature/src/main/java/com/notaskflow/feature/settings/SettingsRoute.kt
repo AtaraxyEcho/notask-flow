@@ -1,5 +1,7 @@
 package com.notaskflow.feature.settings
 
+import com.notaskflow.core.common.AppLocaleController
+import com.notaskflow.feature.R
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -65,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -101,6 +105,7 @@ fun SettingsRoute(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var localeTick by remember { mutableStateOf(0) }
     var showProfileDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
@@ -123,34 +128,43 @@ fun SettingsRoute(
 
     val sections = listOf(
         SettingSection(
-            title = "账户安全",
+            title = stringResource(R.string.settings_account_security),
             items = listOf(
-                SettingItem("编辑资料", Icons.Filled.Edit, "昵称；头像点击上方头像修改", onClick = { showProfileDialog = true }),
-                SettingItem("修改邮箱", Icons.Filled.Email, "需要旧邮箱验证码确认", onClick = { showEmailDialog = true }),
-                SettingItem("修改密码", Icons.Filled.Lock, "需要输入当前密码", onClick = { showPasswordDialog = true })
+                SettingItem(stringResource(R.string.settings_edit_profile), Icons.Filled.Edit, stringResource(R.string.settings_edit_profile_hint), onClick = { showProfileDialog = true }),
+                SettingItem(stringResource(R.string.settings_change_email), Icons.Filled.Email, stringResource(R.string.settings_change_email_hint), onClick = { showEmailDialog = true }),
+                SettingItem(stringResource(R.string.settings_change_password), Icons.Filled.Lock, stringResource(R.string.settings_change_password_hint), onClick = { showPasswordDialog = true })
             )
         ),
         SettingSection(
-            title = "偏好设置",
+            title = stringResource(R.string.settings_preferences),
             items = listOf(
                 SettingItem(
-                    "主题与外观",
+                    stringResource(R.string.settings_theme_appearance),
                     Icons.Filled.Palette,
                     uiState.notificationSettings?.themeLabel() ?: "跟随当前默认配置",
                     onClick = { showThemeSheet = true }
                 ),
                 SettingItem(
-                    "通知偏好",
+                    stringResource(R.string.settings_notification),
                     Icons.Filled.Notifications,
-                    uiState.notificationSettings?.noticeLabel() ?: "任务、笔记、提及、系统通知",
+                    uiState.notificationSettings?.noticeLabel() ?: stringResource(R.string.settings_notification_hint),
                     onClick = { showNotificationSheet = true }
+                ),
+                SettingItem(
+                    stringResource(R.string.settings_language),
+                    Icons.Filled.Language,
+                    if (AppLocaleController.isEnglish()) "English" else "简体中文",
+                    onClick = {
+                        AppLocaleController.toggle(context)
+                        localeTick = localeTick + 1
+                    }
                 )
             )
         ),
         SettingSection(
-            title = "其他",
+            title = stringResource(R.string.settings_other),
             items = listOf(
-                SettingItem("退出登录", Icons.AutoMirrored.Filled.Logout, isDestructive = true, onClick = onLogout)
+                SettingItem(stringResource(R.string.settings_logout), Icons.AutoMirrored.Filled.Logout, isDestructive = true, onClick = onLogout)
             )
         )
     )
@@ -158,7 +172,7 @@ fun SettingsRoute(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("设置", fontWeight = FontWeight.SemiBold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -472,13 +486,13 @@ private fun ProfileEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("编辑资料") },
+        title = { Text(stringResource(R.string.settings_edit_profile)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = nickname,
                     onValueChange = { nickname = it },
-                    label = { Text("昵称") },
+                    label = { Text(stringResource(R.string.settings_nickname)) },
                     leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -486,12 +500,12 @@ private fun ProfileEditDialog(
                 OutlinedTextField(
                     value = profile?.email.orEmpty(),
                     onValueChange = { },
-                    label = { Text("邮箱") },
+                    label = { Text(stringResource(R.string.settings_email)) },
                     leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = false,
-                    supportingText = { Text("邮箱修改需要旧邮箱验证码确认，当前移动端先禁止直接修改") }
+                    supportingText = { Text(stringResource(R.string.settings_email_readonly_hint)) }
                 )
             }
         },
@@ -500,12 +514,12 @@ private fun ProfileEditDialog(
                 onClick = { onSubmit(nickname) },
                 enabled = !isSaving
             ) {
-                Text("保存")
+                Text(stringResource(R.string.settings_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.settings_cancel))
             }
         }
     )
@@ -526,13 +540,13 @@ private fun EmailChangeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("修改邮箱") },
+        title = { Text(stringResource(R.string.settings_change_email)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = currentEmail,
                     onValueChange = { },
-                    label = { Text("当前邮箱") },
+                    label = { Text(stringResource(R.string.settings_current_email)) },
                     leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -544,7 +558,7 @@ private fun EmailChangeDialog(
                         newEmail = it
                         localError = null
                     },
-                    label = { Text("新邮箱") },
+                    label = { Text(stringResource(R.string.settings_new_email)) },
                     leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -560,7 +574,7 @@ private fun EmailChangeDialog(
                             code = it.filter(Char::isDigit).take(EMAIL_CODE_LENGTH)
                             localError = null
                         },
-                        label = { Text("验证码") },
+                        label = { Text(stringResource(R.string.settings_email_code)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -600,12 +614,12 @@ private fun EmailChangeDialog(
                 },
                 enabled = !isSaving && !isCodeSending
             ) {
-                Text("确认修改")
+                Text(stringResource(R.string.settings_confirm_change))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.settings_cancel))
             }
         }
     )
@@ -624,7 +638,7 @@ private fun PasswordDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("修改密码") },
+        title = { Text(stringResource(R.string.settings_change_password)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -633,7 +647,7 @@ private fun PasswordDialog(
                         oldPassword = it
                         localError = null
                     },
-                    label = { Text("当前密码") },
+                    label = { Text(stringResource(R.string.settings_current_password)) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -644,7 +658,7 @@ private fun PasswordDialog(
                         newPassword = it
                         localError = null
                     },
-                    label = { Text("新密码") },
+                    label = { Text(stringResource(R.string.settings_new_password)) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -655,7 +669,7 @@ private fun PasswordDialog(
                         confirmPassword = it
                         localError = null
                     },
-                    label = { Text("确认新密码") },
+                    label = { Text(stringResource(R.string.settings_confirm_new_password)) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -677,12 +691,12 @@ private fun PasswordDialog(
                 },
                 enabled = !isSaving
             ) {
-                Text("确认修改")
+                Text(stringResource(R.string.settings_confirm_change))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.settings_cancel))
             }
         }
     )
@@ -707,16 +721,16 @@ private fun ThemeSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("主题与外观", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.settings_theme_appearance), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             ChoiceRow(
-                title = "模式",
+                title = stringResource(R.string.settings_theme_mode),
                 options = listOf("light" to "浅色", "dark" to "深色", "system" to "跟随系统"),
                 selected = current.themeMode,
                 enabled = !isSaving,
                 onSelect = { mode -> onUpdate(current.copy(themeMode = mode)) }
             )
             ChoiceRow(
-                title = "个人主题",
+                title = stringResource(R.string.settings_personal_theme),
                 options = listOf("sunrise" to "朝阳", "forest" to "森林", "ocean" to "海洋", "midnight" to "暗夜"),
                 selected = current.personalThemePreset,
                 enabled = !isSaving,
@@ -745,7 +759,7 @@ private fun NotificationSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("通知偏好", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.settings_notification), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             SwitchRow("任务通知", current.taskNoticeEnabled, isSaving) {
                 onUpdate(current.copy(taskNoticeEnabled = it))
             }
@@ -842,7 +856,7 @@ private fun QuietTimeRow(
                 onValueChange = { startTime = it },
                 enabled = enabled && current.quietEnabled,
                 modifier = Modifier.weight(1f),
-                label = { Text("开始") },
+                label = { Text(stringResource(R.string.common_start)) },
                 singleLine = true
             )
             OutlinedTextField(
@@ -850,7 +864,7 @@ private fun QuietTimeRow(
                 onValueChange = { endTime = it },
                 enabled = enabled && current.quietEnabled,
                 modifier = Modifier.weight(1f),
-                label = { Text("结束") },
+                label = { Text(stringResource(R.string.common_end)) },
                 singleLine = true
             )
         }
@@ -866,7 +880,7 @@ private fun QuietTimeRow(
             enabled = enabled && current.quietEnabled,
             modifier = Modifier.widthIn(min = 120.dp)
         ) {
-            Text("保存时段")
+            Text(stringResource(R.string.settings_save_period))
         }
     }
 }

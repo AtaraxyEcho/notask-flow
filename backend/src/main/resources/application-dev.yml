@@ -26,8 +26,15 @@ logging:
     com.notaskflow: debug
 
 notask-flow:
+  admin:
+    password: ${ADMIN_PASSWORD:Admin123456}
+  collab:
+    internal-token: ${COLLAB_INTERNAL_TOKEN:notask-flow-collab-internal-change-me}
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket-name: ${MINIO_BUCKET:notask-flow}
+
+sa-token:
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:notask-flow-dev-jwt-secret-change-me}

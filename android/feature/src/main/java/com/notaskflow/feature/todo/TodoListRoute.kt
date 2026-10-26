@@ -1,5 +1,7 @@
 package com.notaskflow.feature.todo
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -106,7 +108,7 @@ fun TodoListRoute(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    placeholder = { Text("搜索待办") },
+                    placeholder = { Text(stringResource(R.string.todo_search_placeholder)) },
                     leadingIcon = {
                         Icon(
                             Icons.Filled.Search,
@@ -145,7 +147,7 @@ fun TodoListRoute(
             }
 
             if (spaceId == null) {
-                item { StateText("请先选择空间") }
+                item { StateText(stringResource(R.string.todo_select_space_first)) }
             } else if (uiState.isLoading && uiState.todos.isEmpty()) {
                 item {
                     Box(
@@ -160,7 +162,7 @@ fun TodoListRoute(
             } else if (uiState.errorMessage != null && uiState.todos.isEmpty()) {
                 item { StateText(uiState.errorMessage ?: "加载失败") }
             } else if (uiState.todos.isEmpty()) {
-                item { StateText("暂无待办") }
+                item { StateText(stringResource(R.string.todo_empty)) }
             } else {
                 items(uiState.todos, key = { todo -> "todo-${todo.id}" }) { todo ->
                     SwipeDeleteContainer(
@@ -205,7 +207,7 @@ fun TodoListRoute(
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            title = { Text("新建待办") },
+            title = { Text(stringResource(R.string.todo_create_title)) },
             text = {
                 TodoEditFields(
                     title = newTodoTitle,
@@ -223,12 +225,12 @@ fun TodoListRoute(
                         showCreateDialog = false
                     }
                 ) {
-                    Text("保存")
+                    Text(stringResource(R.string.common_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -237,7 +239,7 @@ fun TodoListRoute(
     editingTodo?.let { todo ->
         AlertDialog(
             onDismissRequest = { editingTodo = null },
-            title = { Text("编辑待办") },
+            title = { Text(stringResource(R.string.todo_edit_title)) },
             text = {
                 TodoEditFields(
                     title = newTodoTitle,
@@ -255,12 +257,12 @@ fun TodoListRoute(
                         editingTodo = null
                     }
                 ) {
-                    Text("保存")
+                    Text(stringResource(R.string.common_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { editingTodo = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -269,8 +271,8 @@ fun TodoListRoute(
     pendingDeleteTodo?.let { todo ->
         AlertDialog(
             onDismissRequest = { pendingDeleteTodo = null },
-            title = { Text("删除待办") },
-            text = { Text("确定删除“${todo.title}”吗？") },
+            title = { Text(stringResource(R.string.todo_delete_title)) },
+            text = { Text(stringResource(R.string.todo_delete_confirm, todo.title)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -278,12 +280,12 @@ fun TodoListRoute(
                         pendingDeleteTodo = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteTodo = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -391,7 +393,7 @@ private fun TodoCard(
             }
 
             TextButton(onClick = onEdit) {
-                Text("编辑")
+                Text(stringResource(R.string.common_edit_action))
             }
         }
     }

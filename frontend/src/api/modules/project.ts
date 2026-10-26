@@ -48,8 +48,17 @@ export const projectService = {
   archive(spaceId: number, projectId: number, archived: boolean) {
     return http.put<Project>(`/spaces/${spaceId}/projects/${projectId}/archive`, { archived })
   },
-  delete(spaceId: number, projectId: number) {
-    return http.delete<void>(`/spaces/${spaceId}/projects/${projectId}`)
+  delete(
+    spaceId: number,
+    projectId: number,
+    payload?: {
+      taskStrategy?: 'TRANSFER' | 'UNLINK' | 'DELETE'
+      taskTargetProjectId?: number
+      docStrategy?: 'TRANSFER' | 'UNLINK' | 'DELETE'
+      docTargetProjectId?: number
+    },
+  ) {
+    return http.delete<void>(`/spaces/${spaceId}/projects/${projectId}`, { data: payload })
   },
   members(spaceId: number, projectId: number) {
     return http.get<ProjectMember[]>(`/spaces/${spaceId}/projects/${projectId}/members`)

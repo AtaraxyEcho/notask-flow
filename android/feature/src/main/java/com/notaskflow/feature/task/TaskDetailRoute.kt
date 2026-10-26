@@ -1,9 +1,15 @@
 package com.notaskflow.feature.task
 
+import com.notaskflow.feature.R
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.runtime.rememberCoroutineScope
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -69,6 +75,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -95,6 +102,7 @@ fun TaskDetailRoute(
     viewModel: TaskDetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     var completingMemberId by remember { mutableStateOf<Long?>(null) }
     var completionRemark by remember { mutableStateOf("") }
@@ -166,7 +174,7 @@ fun TaskDetailRoute(
         }
     ) { padding ->
         if (spaceId == null) {
-            StateText("请先选择空间", modifier = Modifier.padding(padding))
+            StateText(stringResource(R.string.common_select_space_first), modifier = Modifier.padding(padding))
             return@Scaffold
         }
         if (uiState.isLoading && uiState.task == null) {
@@ -212,7 +220,7 @@ fun TaskDetailRoute(
                 }
                 if (task.members.isNotEmpty()) {
                     item {
-                        Text("成员职责", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.task_member_duties), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     }
                     items(task.members, key = { member -> "task-member-${member.id}" }) { member ->
                         TaskMemberRow(
@@ -288,7 +296,7 @@ fun TaskDetailRoute(
     completingMemberId?.let { memberId ->
         AlertDialog(
             onDismissRequest = { completingMemberId = null },
-            title = { Text("完成职责") },
+            title = { Text(stringResource(R.string.task_complete_duty)) },
             text = {
                 NotaskFilledTextField(
                     value = completionRemark,
@@ -309,12 +317,12 @@ fun TaskDetailRoute(
                     },
                     enabled = !uiState.isSubmitting
                 ) {
-                    Text("确认")
+                    Text(stringResource(R.string.common_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { completingMemberId = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -327,7 +335,11 @@ fun TaskDetailRoute(
             isUploading = uiState.isAttachmentUploading,
             activeAttachmentId = uiState.activeAttachmentId,
             onUpload = { attachmentPicker.launch(arrayOf(ALL_FILE_TYPES)) },
-            onOpen = { attachment -> openTaskAttachment(context, attachment) },
+            onOpen = { attachment ->
+                scope.launch {
+                    openTaskAttachment(context, attachment, uiState.authToken)
+                }
+            },
             onRemove = viewModel::unbindAttachment,
             onDismiss = { showAttachmentSheet = false }
         )
@@ -336,7 +348,7 @@ fun TaskDetailRoute(
     if (showEditTaskDialog) {
         AlertDialog(
             onDismissRequest = { showEditTaskDialog = false },
-            title = { Text("编辑任务") },
+            title = { Text(stringResource(R.string.task_edit)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     NotaskFilledTextField(
@@ -366,12 +378,12 @@ fun TaskDetailRoute(
                     },
                     enabled = !uiState.isSubmitting
                 ) {
-                    Text("保存")
+                    Text(stringResource(R.string.common_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditTaskDialog = false }, enabled = !uiState.isSubmitting) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -380,8 +392,8 @@ fun TaskDetailRoute(
     if (showDeleteTaskDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteTaskDialog = false },
-            title = { Text("删除任务") },
-            text = { Text("确定删除当前任务吗？相关评论、成员职责和附件引用也可能受到影响。") },
+            title = { Text(stringResource(R.string.task_delete_title)) },
+            text = { Text(stringResource(R.string.task_delete_confirm)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -390,12 +402,12 @@ fun TaskDetailRoute(
                     },
                     enabled = !uiState.isSubmitting
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteTaskDialog = false }, enabled = !uiState.isSubmitting) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -474,7 +486,7 @@ private fun ClaimCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("认领开放任务", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.task_claim_open), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             NotaskFilledTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -488,7 +500,7 @@ private fun ClaimCard(
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = onSubmit, enabled = enabled) {
-                    Text("认领")
+                    Text(stringResource(R.string.task_claim))
                 }
             }
         }
@@ -534,12 +546,12 @@ private fun TaskMemberRow(
             when (member.status) {
                 TaskMemberStatus.PENDING -> {
                     TextButton(onClick = onStart, enabled = enabled) {
-                        Text("开始")
+                        Text(stringResource(R.string.task_start))
                     }
                 }
                 TaskMemberStatus.IN_PROGRESS -> {
                     TextButton(onClick = onComplete, enabled = enabled) {
-                        Text("完成")
+                        Text(stringResource(R.string.task_complete))
                     }
                 }
                 TaskMemberStatus.COMPLETED -> Unit
@@ -676,9 +688,9 @@ private fun MentionPickerBubble(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("选择成员", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.task_select_member), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 TextButton(onClick = onDismiss) {
-                    Text("关闭")
+                    Text(stringResource(R.string.common_close))
                 }
             }
             if (members.isEmpty()) {
@@ -762,7 +774,7 @@ private fun TaskAttachmentSummaryCard(
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("任务附件", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.task_attachments), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
                     text = if (isUploading) "附件上传中" else "${attachmentCount} 个附件",
                     style = MaterialTheme.typography.bodySmall,
@@ -770,7 +782,7 @@ private fun TaskAttachmentSummaryCard(
                 )
             }
             TextButton(onClick = onClick) {
-                Text("管理")
+                Text(stringResource(R.string.task_manage))
             }
         }
     }
@@ -802,7 +814,7 @@ private fun TaskAttachmentSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("任务附件", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.task_attachments), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 TextButton(
                     onClick = onUpload,
                     enabled = !isUploading && activeAttachmentId == null
@@ -824,7 +836,7 @@ private fun TaskAttachmentSheet(
                     CircularProgressIndicator()
                 }
             } else if (attachments.isEmpty()) {
-                Text("当前任务暂无附件", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.task_no_attachments), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 attachments.forEach { attachment ->
                     Row(
@@ -850,7 +862,7 @@ private fun TaskAttachmentSheet(
                             )
                         } else {
                             TextButton(onClick = { onOpen(attachment) }) {
-                                Text("打开")
+                                Text(stringResource(R.string.task_open))
                             }
                             IconButton(
                                 onClick = { onRemove(attachment.id) },
@@ -918,18 +930,88 @@ private fun Long.readableFileSize(): String {
     return "%.1f MB".format(mb)
 }
 
-private fun openTaskAttachment(context: Context, attachment: TaskAttachment) {
+/**
+ * 下载任务附件到本地缓存后通过 FileProvider 打开。
+ *
+ * 附件下载接口受 {@code Authorization} 保护，直接拉起外部浏览器会 401，
+ * 因此统一走带鉴权头的下载链路。
+ */
+private suspend fun openTaskAttachment(
+    context: Context,
+    attachment: TaskAttachment,
+    authToken: String?
+) {
     val url = attachment.downloadUrl?.takeIf { it.isNotBlank() }?.toAbsoluteUrl()
     if (url == null) {
         Toast.makeText(context, "当前附件暂无可打开链接", Toast.LENGTH_SHORT).show()
         return
     }
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    val localUri = runCatching {
+        withContext(Dispatchers.IO) {
+            downloadAttachmentToCache(context, attachment, url, authToken)
+        }
+    }.getOrElse {
+        Toast.makeText(context, "附件下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
+        return
+    }
+    val intent = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(localUri, attachment.mimeTypeOrDefault())
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { context.startActivity(intent) }
         .onFailure {
             Toast.makeText(context, "没有可打开该附件的应用", Toast.LENGTH_SHORT).show()
         }
+}
+
+/**
+ * 将任务附件下载到应用缓存目录。
+ *
+ * @param context 上下文
+ * @param attachment 附件信息
+ * @param url 下载地址
+ * @param authToken 鉴权令牌
+ * @return FileProvider 可访问的 Uri
+ */
+private fun downloadAttachmentToCache(
+    context: Context,
+    attachment: TaskAttachment,
+    url: String,
+    authToken: String?
+): android.net.Uri {
+    val cacheDir = File(context.cacheDir, ATTACHMENT_CACHE_DIR).apply { mkdirs() }
+    val safeName = attachment.fileName.ifBlank { "attachment-${attachment.id}" }.let { raw ->
+        raw.replace(Regex("[\\/:*?\"<>|\\r\\n]"), "_")
+    }
+    val cacheFile = File(cacheDir, "${attachment.id}-$safeName")
+    val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+    connection.connectTimeout = 15000
+    connection.readTimeout = 30000
+    authToken?.takeIf { it.isNotBlank() }?.let { token ->
+        connection.setRequestProperty("Authorization", "Bearer $token")
+    }
+    if (connection.responseCode !in 200..299) {
+        connection.disconnect()
+        throw IllegalStateException("附件请求失败")
+    }
+    connection.inputStream.use { input ->
+        cacheFile.outputStream().use { output -> input.copyTo(output) }
+    }
+    connection.disconnect()
+    return androidx.core.content.FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        cacheFile
+    )
+}
+
+/**
+ * 解析附件 MIME 类型，缺失时回退为通用二进制流。
+ *
+ * @return MIME 类型
+ */
+private fun TaskAttachment.mimeTypeOrDefault(): String {
+    return mimeType?.takeIf { it.isNotBlank() } ?: "application/octet-stream"
 }
 
 private fun String.toAbsoluteUrl(): String {
@@ -947,3 +1029,5 @@ private fun String.toAbsoluteUrl(): String {
 
 private const val FILE_SIZE_KB = 1024
 private const val ALL_FILE_TYPES = "*/*"
+
+private const val ATTACHMENT_CACHE_DIR = "task-attachments"

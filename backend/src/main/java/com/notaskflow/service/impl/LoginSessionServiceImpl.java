@@ -11,6 +11,7 @@ import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.service.LoginSessionService;
 import com.notaskflow.service.SystemSettingService;
 import com.notaskflow.utils.RedisUtil;
+import com.notaskflow.utils.RequestClientUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -105,8 +106,11 @@ public class LoginSessionServiceImpl implements LoginSessionService {
         if (!StringUtils.hasText(tokenValue)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "登录令牌签发失败");
         }
-        redisUtil.set(RedisKeyConstants.tokenSession(tokenValue), session.getSessionId(),
-                Duration.ofSeconds(Math.max(1L, session.getExpireSeconds())));
+        Duration ttl = Duration.ofSeconds(Math.max(1L, session.getExpireSeconds()));
+        redisUtil.set(RedisKeyConstants.tokenSession(tokenValue), session.getSessionId(), ttl);
+        String sessionTokensKey = RedisKeyConstants.sessionTokens(session.getSessionId());
+        redisUtil.setAdd(sessionTokensKey, tokenValue);
+        redisUtil.expire(sessionTokensKey, ttl);
     }
 
     /**
@@ -277,14 +281,21 @@ public class LoginSessionServiceImpl implements LoginSessionService {
         return sessionId;
     }
 
+    /**
+     * 精确删除指定会话关联的全部令牌映射。
+     *
+     * <p>通过 {@code notask:session-tokens:{sessionId}} 反向索引直接定位令牌，
+     * 避免每次注销都全量 {@code SCAN} 全站令牌键。</p>
+     *
+     * @param sessionId 会话标识
+     */
     private void deleteTokenSessionMappings(String sessionId) {
-        Set<String> tokenSessionKeys = redisUtil.scanKeys(RedisKeyConstants.tokenSessionPattern(), REDIS_SCAN_COUNT);
-        for (String tokenSessionKey : tokenSessionKeys) {
-            String mappedSessionId = redisUtil.getString(tokenSessionKey);
-            if (sessionId.equals(mappedSessionId)) {
-                redisUtil.delete(tokenSessionKey);
-            }
+        String sessionTokensKey = RedisKeyConstants.sessionTokens(sessionId);
+        Set<String> tokenValues = redisUtil.setMembers(sessionTokensKey);
+        if (!tokenValues.isEmpty()) {
+            redisUtil.delete(tokenValues.stream().map(RedisKeyConstants::tokenSession).toList());
         }
+        redisUtil.delete(sessionTokensKey);
     }
 
     private void revokeSessionsByClientType(Long userId, ClientType clientType) {
@@ -386,15 +397,7 @@ public class LoginSessionServiceImpl implements LoginSessionService {
         if (request == null) {
             return "";
         }
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwardedFor)) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (StringUtils.hasText(realIp)) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr();
+        return RequestClientUtil.resolveIp(request);
     }
 
     private String currentUserAgent() {

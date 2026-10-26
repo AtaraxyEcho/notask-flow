@@ -5,6 +5,7 @@ const syncProtocol = require('y-protocols/sync')
 const awarenessProtocol = require('y-protocols/awareness')
 const encoding = require('lib0/encoding')
 const decoding = require('lib0/decoding')
+const crypto = require('crypto')
 
 const MESSAGE_SYNC = 0
 const MESSAGE_AWARENESS = 1
@@ -18,6 +19,7 @@ const apiBaseUrl = (process.env.API_BASE_URL || 'http://app:8080').replace(/\/$/
 const ticketVerifyPath = process.env.TICKET_VERIFY_PATH || '/api/v1/internal/collab/tickets/consume'
 const spaceEventTicketVerifyPath =
   process.env.SPACE_EVENT_TICKET_VERIFY_PATH || '/api/v1/internal/collab/space-events/tickets/consume'
+const noteContentPersistPath = process.env.NOTE_CONTENT_PERSIST_PATH || '/api/v1/internal/collab/notes'
 const internalToken = process.env.INTERNAL_TOKEN || ''
 const authTimeoutMs = 15000
 const debugLogsEnabled = process.env.COLLAB_DEBUG_LOGS === 'true'
@@ -35,6 +37,68 @@ const debugLog = (...args) => {
 
 const buildRoomKey = (payload) => `space:${payload.spaceId}:note:${payload.noteId}`
 const buildSpaceEventKey = (spaceId) => `space:${spaceId}`
+
+/**
+ * 从房间键中解析笔记标识。
+ *
+ * @param {string} roomKey 房间键
+ * @returns {number|null} 笔记标识
+ */
+const extractNoteIdFromRoomKey = (roomKey) => {
+  const matched = /:note:(\d+)$/.exec(roomKey || '')
+  return matched ? Number(matched[1]) : null
+}
+
+const timingSafeStringEqual = (expected, actual) => {
+  if (typeof expected !== 'string' || typeof actual !== 'string') {
+    return false
+  }
+
+  const expectedBuffer = Buffer.from(expected)
+  const actualBuffer = Buffer.from(actual)
+  if (expectedBuffer.length !== actualBuffer.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(expectedBuffer, actualBuffer)
+}
+
+/**
+ * 将房间暂存的内容快照持久化到后端。
+ *
+ * 房间销毁前调用，作为客户端崩溃后的兜底落盘通道。
+ *
+ * @param {object} room 房间对象
+ */
+const persistRoomSnapshot = async (room) => {
+  const snapshot = room.lastSnapshot
+  if (!snapshot || room.snapshotPersistedAt >= snapshot.savedAt) {
+    return
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}${noteContentPersistPath}/${room.noteId}/content`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(internalToken ? { 'X-Internal-Token': internalToken } : {}),
+      },
+      body: JSON.stringify({
+        content: snapshot.content,
+        contentHtml: snapshot.contentHtml,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Snapshot persistence failed with status ${response.status}`)
+    }
+
+    room.snapshotPersistedAt = snapshot.savedAt
+    debugLog('snapshot persisted', { roomKey: room.key, noteId: room.noteId, savedAt: snapshot.savedAt })
+  } catch (error) {
+    console.error('[collab-ws] snapshot persistence failed', { roomKey: room.key, noteId: room.noteId }, error)
+  }
+}
 
 const extractAwarenessClientIds = (update) => {
   const decoder = decoding.createDecoder(update)
@@ -96,6 +160,41 @@ const decodeTextYjsPayload = (payload) => {
   return Buffer.from(message.payload, 'base64')
 }
 
+/**
+ * 处理文本控制消息（目前仅支持内容快照）。
+ *
+ * @param {object} room 房间对象
+ * @param {import('ws').WebSocket} socket 发送方连接
+ * @param {Buffer} payload 消息体
+ */
+const handleTextControlMessage = (room, socket, payload) => {
+  let message
+  try {
+    message = JSON.parse(payload.toString('utf8'))
+  } catch {
+    return
+  }
+
+  if (!message || message.type !== 'content-snapshot') {
+    return
+  }
+
+  if (typeof message.content !== 'string' && typeof message.contentHtml !== 'string') {
+    return
+  }
+
+  room.lastSnapshot = {
+    content: typeof message.content === 'string' ? message.content : '',
+    contentHtml: typeof message.contentHtml === 'string' ? message.contentHtml : '',
+    savedAt: typeof message.savedAt === 'number' ? message.savedAt : Date.now(),
+  }
+  debugLog('content snapshot received', {
+    roomKey: room.key,
+    noteId: room.noteId,
+    savedAt: room.lastSnapshot.savedAt,
+  })
+}
+
 const broadcastBinary = (room, payload, originSocket) => {
   for (const client of room.clients) {
     if (client === originSocket || client.readyState !== WebSocket.OPEN) {
@@ -112,6 +211,7 @@ const destroyRoom = (roomKey) => {
     return
   }
 
+  void persistRoomSnapshot(room)
   room.awareness.destroy()
   room.doc.destroy()
   rooms.delete(roomKey)
@@ -149,6 +249,7 @@ const getOrCreateRoom = (roomKey, initialContent) => {
   const awareness = new awarenessProtocol.Awareness(doc)
   const room = {
     key: roomKey,
+    noteId: extractNoteIdFromRoomKey(roomKey),
     doc,
     yXmlFragment,
     awareness,
@@ -158,6 +259,8 @@ const getOrCreateRoom = (roomKey, initialContent) => {
     bootstrapSocket: null,
     bootstrapped: yXmlFragment.length > 0,
     destroyTimer: null,
+    lastSnapshot: null,
+    snapshotPersistedAt: 0,
   }
 
   doc.on('update', (update, origin) => {
@@ -299,9 +402,48 @@ const readJsonBody = (request) =>
     request.on('error', reject)
   })
 
+/**
+ * 按笔记标识重置协同房间。
+ *
+ * 后端在笔记内容被外部变更（如版本恢复）时调用，丢弃内存中的 Yjs 状态，
+ * 使后续客户端从服务端最新内容重新引导，避免恢复结果被内存快照覆盖。
+ *
+ * @param {number|null} noteId 笔记标识
+ */
+const resetRoomByNoteId = (noteId) => {
+  if (!noteId) {
+    return
+  }
+
+  for (const [roomKey, room] of rooms.entries()) {
+    if (room.noteId !== Number(noteId)) {
+      continue
+    }
+
+    if (room.clients.size) {
+      for (const client of room.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ type: 'collab_reset', noteId: room.noteId }))
+        }
+      }
+    }
+
+    void persistRoomSnapshot(room)
+    room.awareness.destroy()
+    room.doc.destroy()
+    rooms.delete(roomKey)
+    debugLog('room reset by collabReset event', { roomKey, noteId: room.noteId })
+    break
+  }
+}
+
 const broadcastSpaceEvent = (event) => {
   if (!event || !event.spaceId) {
     return 0
+  }
+
+  if (event.type === 'DOCUMENT_UPDATED' && event.payload && event.payload.collabReset) {
+    resetRoomByNoteId(event.payload.noteId)
   }
 
   const subscribers = spaceEventSubscribers.get(buildSpaceEventKey(event.spaceId))
@@ -345,7 +487,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (request.method === 'POST' && request.url === '/internal/broadcast') {
-    if (!internalToken || request.headers['x-internal-token'] !== internalToken) {
+    if (!internalToken || !timingSafeStringEqual(internalToken, request.headers['x-internal-token'])) {
       response.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' })
       response.end(JSON.stringify({ message: 'Forbidden' }))
       return
@@ -503,6 +645,12 @@ wss.on('connection', (socket) => {
     }
 
     const binaryPayload = isBinary ? payload : decodeTextYjsPayload(payload)
+
+    if (!binaryPayload && !isBinary) {
+      handleTextControlMessage(room, socket, payload)
+      return
+    }
+
     if (!binaryPayload) {
       return
     }

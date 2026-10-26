@@ -7,6 +7,7 @@ import com.notaskflow.domain.query.EventFailLogQuery;
 import com.notaskflow.domain.vo.EventFailLogVO;
 import com.notaskflow.exception.AccessDeniedException;
 import com.notaskflow.service.EventFailLogService;
+import com.notaskflow.utils.ConstantTimeUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -105,7 +106,7 @@ public class EventFailLogInternalController {
 
     private void ensureInternalToken(String internalToken) {
         if (!StringUtils.hasText(internalToken)
-                || !internalToken.equals(collaborationProperties.getInternalToken())) {
+                || !ConstantTimeUtils.equals(collaborationProperties.getInternalToken(), internalToken)) {
             throw new AccessDeniedException("事件失败管理内部调用令牌无效");
         }
     }

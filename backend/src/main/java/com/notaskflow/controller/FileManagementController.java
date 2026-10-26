@@ -29,10 +29,12 @@ import jakarta.validation.Valid;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -57,6 +59,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/spaces/{spaceId}/files")
 public class FileManagementController {
+
+    /** 可执行脚本类预览文件使用的沙箱内容安全策略。 */
+    private static final String PREVIEW_SANDBOX_CSP =
+            "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'";
 
     private final FileManagementService fileManagementService;
 
@@ -354,10 +360,32 @@ public class FileManagementController {
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .contentType(resolvePreviewMediaType(resource.getMimeType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, inlineDisposition(resource.getFileName()));
+        if (isScriptablePreviewType(resource.getMimeType())) {
+            // SVG/XML 等可执行脚本的类型必须使用沙箱策略，避免存储型 XSS 读取登录态
+            builder.header("Content-Security-Policy", PREVIEW_SANDBOX_CSP);
+            builder.header("X-Content-Type-Options", "nosniff");
+        }
         if (resource.getFileSize() != null) {
             builder.contentLength(resource.getFileSize());
         }
         return builder.body(body);
+    }
+
+    /**
+     * 判断预览类型是否可能执行脚本。
+     *
+     * @param mimeType 文件 MIME 类型
+     * @return true 表示需要沙箱隔离
+     */
+    private boolean isScriptablePreviewType(String mimeType) {
+        if (!StringUtils.hasText(mimeType)) {
+            return false;
+        }
+        String normalized = mimeType.toLowerCase(Locale.ROOT);
+        return normalized.startsWith("image/svg")
+                || normalized.contains("xml")
+                || normalized.startsWith("text/html")
+                || normalized.startsWith("application/xhtml");
     }
 
     /**

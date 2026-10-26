@@ -2,29 +2,54 @@ package com.notaskflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.notaskflow.common.constant.RedisKeyConstants;
+import com.notaskflow.common.enums.BusinessType;
 import com.notaskflow.common.enums.RoleCode;
+import com.notaskflow.common.enums.SearchIndexOperation;
 import com.notaskflow.common.enums.SpaceRealtimeEventType;
 import com.notaskflow.common.enums.SpaceType;
 import com.notaskflow.domain.dto.request.SpaceCreateRequest;
 import com.notaskflow.domain.dto.request.SpaceMemberAddRequest;
 import com.notaskflow.domain.dto.request.SpaceMemberRoleUpdateRequest;
 import com.notaskflow.domain.dto.request.SpaceUpdateRequest;
+import com.notaskflow.domain.entity.FileFolder;
+import com.notaskflow.domain.entity.ManagedFile;
+import com.notaskflow.domain.entity.Note;
+import com.notaskflow.domain.entity.NoteHistory;
 import com.notaskflow.domain.entity.Notification;
+import com.notaskflow.domain.entity.Notebook;
+import com.notaskflow.domain.entity.Project;
+import com.notaskflow.domain.entity.ProjectMember;
 import com.notaskflow.domain.entity.Role;
 import com.notaskflow.domain.entity.Space;
 import com.notaskflow.domain.entity.SpaceMember;
+import com.notaskflow.domain.entity.Task;
+import com.notaskflow.domain.entity.TaskMember;
+import com.notaskflow.domain.entity.Todo;
 import com.notaskflow.domain.entity.User;
 import com.notaskflow.domain.vo.SpaceEventTicketConsumeVO;
 import com.notaskflow.domain.vo.SpaceEventTicketVO;
 import com.notaskflow.domain.vo.SpaceMemberVO;
 import com.notaskflow.domain.vo.SpaceVO;
+import com.notaskflow.event.SearchIndexRequestedEvent;
 import com.notaskflow.exception.BusinessException;
 import com.notaskflow.exception.ErrorCode;
 import com.notaskflow.exception.ResourceNotFoundException;
+import com.notaskflow.mapper.BusinessAttachmentMapper;
+import com.notaskflow.mapper.FileFolderMapper;
+import com.notaskflow.mapper.ManagedFileMapper;
+import com.notaskflow.mapper.NoteHistoryMapper;
+import com.notaskflow.mapper.NoteMapper;
+import com.notaskflow.mapper.NoteTagMapper;
+import com.notaskflow.mapper.NotebookMapper;
 import com.notaskflow.mapper.NotificationMapper;
+import com.notaskflow.mapper.ProjectMapper;
+import com.notaskflow.mapper.ProjectMemberMapper;
 import com.notaskflow.mapper.RoleMapper;
 import com.notaskflow.mapper.SpaceMapper;
 import com.notaskflow.mapper.SpaceMemberMapper;
+import com.notaskflow.mapper.TaskMapper;
+import com.notaskflow.mapper.TaskMemberMapper;
+import com.notaskflow.mapper.TodoMapper;
 import com.notaskflow.mapper.UserMapper;
 import com.notaskflow.security.PermissionValidator;
 import com.notaskflow.service.SpaceMemberPresenceService;
@@ -37,13 +62,16 @@ import com.notaskflow.utils.AvatarUrlUtil;
 import com.notaskflow.utils.LoginUserUtil;
 import com.notaskflow.utils.RedisUtil;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -69,6 +97,32 @@ public class SpaceServiceImpl implements SpaceService {
     private final UserMapper userMapper;
 
     private final NotificationMapper notificationMapper;
+
+    private final ProjectMapper projectMapper;
+
+    private final ProjectMemberMapper projectMemberMapper;
+
+    private final TaskMapper taskMapper;
+
+    private final TaskMemberMapper taskMemberMapper;
+
+    private final TodoMapper todoMapper;
+
+    private final NoteMapper noteMapper;
+
+    private final NoteHistoryMapper noteHistoryMapper;
+
+    private final NoteTagMapper noteTagMapper;
+
+    private final NotebookMapper notebookMapper;
+
+    private final ManagedFileMapper managedFileMapper;
+
+    private final FileFolderMapper fileFolderMapper;
+
+    private final BusinessAttachmentMapper businessAttachmentMapper;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final MinioStorageService minioStorageService;
 
@@ -100,10 +154,51 @@ public class SpaceServiceImpl implements SpaceService {
         if (spaceIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return spaceMapper.selectBatchIds(spaceIds).stream()
+        List<Space> spaces = spaceMapper.selectBatchIds(spaceIds).stream()
                 .sorted(spaceComparator())
-                .map(space -> toSpaceVO(space, currentUserId))
                 .toList();
+        Map<Long, Long> memberCounts = countMembersBySpace(spaceIds);
+        Map<Long, Long> unreadCounts = countUnreadBySpace(spaceIds, currentUserId);
+        List<SpaceVO> list = new ArrayList<>(spaces.size());
+        for (Space space : spaces) {
+            list.add(toSpaceVO(space,
+                    memberCounts.getOrDefault(space.getId(), 0L),
+                    unreadCounts.getOrDefault(space.getId(), 0L)));
+        }
+        return list;
+    }
+
+    /**
+     * 批量统计各空间成员数量。
+     *
+     * @param spaceIds 空间标识列表
+     * @return 空间标识到成员数量的映射
+     */
+    private Map<Long, Long> countMembersBySpace(List<Long> spaceIds) {
+        return spaceMemberMapper.selectList(Wrappers.<SpaceMember>lambdaQuery()
+                        .select(SpaceMember::getSpaceId)
+                        .in(SpaceMember::getSpaceId, spaceIds))
+                .stream()
+                .collect(Collectors.groupingBy(
+                        SpaceMember::getSpaceId, Collectors.counting()));
+    }
+
+    /**
+     * 批量统计各空间未读通知数量。
+     *
+     * @param spaceIds 空间标识列表
+     * @param userId 用户标识
+     * @return 空间标识到未读数量的映射
+     */
+    private Map<Long, Long> countUnreadBySpace(List<Long> spaceIds, Long userId) {
+        return notificationMapper.selectList(Wrappers.<Notification>lambdaQuery()
+                        .select(Notification::getSpaceId)
+                        .eq(Notification::getUserId, userId)
+                        .eq(Notification::getIsRead, false)
+                        .in(Notification::getSpaceId, spaceIds))
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Notification::getSpaceId, Collectors.counting()));
     }
 
     /**
@@ -122,6 +217,7 @@ public class SpaceServiceImpl implements SpaceService {
         space.setType(SpaceType.TEAM);
         space.setOwnerUserId(currentUserId);
         space.setJoinApprovalRequired(systemSettingService.isNewTeamJoinApprovalRequired());
+        space.setMemberInviteEnabled(true);
         spaceMapper.insert(space);
 
         SpaceMember member = new SpaceMember();
@@ -160,13 +256,23 @@ public class SpaceServiceImpl implements SpaceService {
         permissionValidator.ensureSpaceAdminOrOwner(spaceId, currentUserId);
         Space space = findSpace(spaceId);
         space.setName(request.getName());
+        if (request.getJoinApprovalRequired() != null) {
+            space.setJoinApprovalRequired(request.getJoinApprovalRequired());
+        }
+        if (request.getMemberInviteEnabled() != null) {
+            space.setMemberInviteEnabled(request.getMemberInviteEnabled());
+        }
         spaceMapper.updateById(space);
-        log.info("空间信息更新完成，spaceId={}，operatorId={}", spaceId, currentUserId);
+        log.info("空间信息更新完成，spaceId={}，joinApprovalRequired={}，memberInviteEnabled={}，operatorId={}",
+                spaceId, space.getJoinApprovalRequired(), space.getMemberInviteEnabled(), currentUserId);
         return toSpaceVO(space, currentUserId);
     }
 
     /**
-     * 删除团队空间及空间成员关系。
+     * 删除团队空间，并级联清理空间下的全部业务数据。
+     *
+     * <p>空间解散时必须同步软删除项目、任务、待办、笔记、网盘与笔记本数据，
+     * 清理 Elasticsearch 索引与全部成员的权限缓存，否则统计接口仍会把已解散空间的数据计入个人负载。</p>
      *
      * @param spaceId 空间标识
      */
@@ -179,9 +285,89 @@ public class SpaceServiceImpl implements SpaceService {
         if (SpaceType.PERSONAL.equals(space.getType())) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "个人空间不可删除");
         }
+        List<SpaceMember> members = spaceMemberMapper.selectList(Wrappers.<SpaceMember>lambdaQuery()
+                .eq(SpaceMember::getSpaceId, spaceId));
+        List<Long> noteIds = noteMapper.selectList(Wrappers.<Note>lambdaQuery()
+                        .select(Note::getId)
+                        .eq(Note::getSpaceId, spaceId))
+                .stream()
+                .map(Note::getId)
+                .toList();
+        List<Long> taskIds = taskMapper.selectList(Wrappers.<Task>lambdaQuery()
+                        .select(Task::getId)
+                        .eq(Task::getSpaceId, spaceId))
+                .stream()
+                .map(Task::getId)
+                .toList();
+        List<Long> todoIds = todoMapper.selectList(Wrappers.<Todo>lambdaQuery()
+                        .select(Todo::getId)
+                        .eq(Todo::getSpaceId, spaceId))
+                .stream()
+                .map(Todo::getId)
+                .toList();
+        cleanSpaceNotes(noteIds);
+        cleanSpaceBusinessAttachments(taskIds, todoIds);
+        if (!taskIds.isEmpty()) {
+            taskMemberMapper.delete(Wrappers.<TaskMember>lambdaQuery().in(TaskMember::getTaskId, taskIds));
+        }
+        taskMapper.delete(Wrappers.<Task>lambdaQuery().eq(Task::getSpaceId, spaceId));
+        todoMapper.delete(Wrappers.<Todo>lambdaQuery().eq(Todo::getSpaceId, spaceId));
+        List<Long> projectIds = projectMapper.selectList(Wrappers.<Project>lambdaQuery()
+                        .select(Project::getId)
+                        .eq(Project::getSpaceId, spaceId))
+                .stream()
+                .map(Project::getId)
+                .toList();
+        if (!projectIds.isEmpty()) {
+            projectMemberMapper.delete(Wrappers.<ProjectMember>lambdaQuery()
+                    .in(ProjectMember::getProjectId, projectIds));
+        }
+        projectMapper.delete(Wrappers.<Project>lambdaQuery().eq(Project::getSpaceId, spaceId));
+        notebookMapper.delete(Wrappers.<Notebook>lambdaQuery().eq(Notebook::getSpaceId, spaceId));
+        managedFileMapper.delete(Wrappers.<ManagedFile>lambdaQuery().eq(ManagedFile::getSpaceId, spaceId));
+        fileFolderMapper.delete(Wrappers.<FileFolder>lambdaQuery().eq(FileFolder::getSpaceId, spaceId));
         spaceMapper.deleteById(spaceId);
         spaceMemberMapper.delete(Wrappers.<SpaceMember>lambdaQuery().eq(SpaceMember::getSpaceId, spaceId));
-        log.info("团队空间删除完成，spaceId={}，operatorId={}", spaceId, currentUserId);
+        for (SpaceMember member : members) {
+            spacePermissionCacheService.evict(spaceId, member.getUserId());
+        }
+        spacePermissionCacheService.evict(spaceId, currentUserId);
+        spaceRealtimeEventService.publishSystem(spaceId, SpaceRealtimeEventType.SPACE_MEMBER_CHANGED,
+                Map.of("spaceId", spaceId, "deleted", true));
+        log.info("团队空间删除完成，spaceId={}，operatorId={}，noteCount={}，taskCount={}",
+                spaceId, currentUserId, noteIds.size(), taskIds.size());
+    }
+
+    /**
+     * 清理空间下的笔记关联数据并发布搜索索引删除事件。
+     *
+     * @param noteIds 笔记标识列表
+     */
+    private void cleanSpaceNotes(List<Long> noteIds) {
+        if (noteIds.isEmpty()) {
+            return;
+        }
+        noteHistoryMapper.delete(Wrappers.<NoteHistory>lambdaQuery().in(NoteHistory::getNoteId, noteIds));
+        noteTagMapper.physicalDeleteByNoteIds(noteIds);
+        businessAttachmentMapper.physicalDeleteByBusinessIds(BusinessType.NOTE, noteIds);
+        noteMapper.deleteBatchIds(noteIds);
+        noteIds.forEach(noteId -> applicationEventPublisher.publishEvent(
+                new SearchIndexRequestedEvent(noteId, SearchIndexOperation.DELETE)));
+    }
+
+    /**
+     * 清理空间下任务与待办的附件绑定关系。
+     *
+     * @param taskIds 任务标识列表
+     * @param todoIds 待办标识列表
+     */
+    private void cleanSpaceBusinessAttachments(List<Long> taskIds, List<Long> todoIds) {
+        if (!taskIds.isEmpty()) {
+            businessAttachmentMapper.physicalDeleteByBusinessIds(BusinessType.TASK, taskIds);
+        }
+        if (!todoIds.isEmpty()) {
+            businessAttachmentMapper.physicalDeleteByBusinessIds(BusinessType.TODO, todoIds);
+        }
     }
 
     /**
@@ -496,14 +682,27 @@ public class SpaceServiceImpl implements SpaceService {
      * @return 空间视图对象
      */
     private SpaceVO toSpaceVO(Space space, Long currentUserId) {
+        return toSpaceVO(space, memberCount(space.getId()), unreadCount(space.getId(), currentUserId));
+    }
+
+    /**
+     * 使用已预加载的统计值转换空间视图对象。
+     *
+     * @param space 空间实体
+     * @param memberCountValue 成员数量
+     * @param unreadCountValue 未读通知数量
+     * @return 空间视图对象
+     */
+    private SpaceVO toSpaceVO(Space space, Long memberCountValue, Long unreadCountValue) {
         return new SpaceVO(
                 space.getId(),
                 space.getName(),
                 space.getType(),
                 space.getOwnerUserId(),
-                memberCount(space.getId()),
-                unreadCount(space.getId(), currentUserId),
+                memberCountValue,
+                unreadCountValue,
                 Boolean.TRUE.equals(space.getJoinApprovalRequired()),
+                !Boolean.FALSE.equals(space.getMemberInviteEnabled()),
                 space.getGmtCreate()
         );
     }

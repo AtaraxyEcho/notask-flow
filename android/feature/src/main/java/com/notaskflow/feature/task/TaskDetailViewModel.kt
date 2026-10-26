@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notaskflow.core.datastore.TokenManager
 import com.notaskflow.domain.model.Task
 import com.notaskflow.domain.model.TaskAttachment
 import com.notaskflow.domain.model.TaskAttachmentUpload
@@ -45,7 +46,8 @@ data class TaskDetailUiState(
     val isAttachmentLoading: Boolean = false,
     val isAttachmentUploading: Boolean = false,
     val activeAttachmentId: Long? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val authToken: String? = null
 ) {
     val availableStatusTargets: List<TaskStatus>
         get() = task?.let { TaskActionPolicy.availableStatusTargets(it) }.orEmpty()
@@ -59,7 +61,8 @@ sealed interface TaskDetailEffect {
 class TaskDetailViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
-    private val spaceRepository: SpaceRepository
+    private val spaceRepository: SpaceRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(TaskDetailUiState())
     val uiState: StateFlow<TaskDetailUiState> = mutableUiState
@@ -79,7 +82,8 @@ class TaskDetailViewModel @Inject constructor(
                     isLoading = true,
                     isTeamSpace = isTeamSpace,
                     selectedMentionUserIds = emptySet(),
-                    errorMessage = null
+                    errorMessage = null,
+                    authToken = tokenManager.currentToken()
                 )
             }
             val taskResult = taskRepository.get(spaceId, taskId)

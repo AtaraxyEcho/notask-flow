@@ -48,19 +48,15 @@ public class NoteViewCountFlushJob {
             return;
         }
         try {
-            Long count = redisUtil.getLong(key);
-            if (count == null || count <= 0) {
-                redisUtil.delete(key);
+            long count = redisUtil.takeCounter(key);
+            if (count <= 0) {
                 return;
             }
             int updated = noteMapper.incrementViewCount(noteId, count);
             if (updated <= 0) {
-                redisUtil.delete(key);
-                return;
-            }
-            Long remaining = redisUtil.increment(key, -count);
-            if (remaining == null || remaining <= 0) {
-                redisUtil.delete(key);
+                // 笔记已不存在或已删除，重新累加避免并发访问的浏览量被丢弃
+                redisUtil.increment(key, count);
+                log.debug("笔记浏览量回写目标不存在，已回滚计数，noteId={}", noteId);
             }
         } catch (RuntimeException exception) {
             log.warn("笔记浏览量回写失败，key={}", key, exception);

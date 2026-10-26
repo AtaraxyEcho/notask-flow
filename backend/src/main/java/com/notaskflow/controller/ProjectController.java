@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.notaskflow.common.ApiResponse;
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.domain.dto.request.ProjectArchiveRequest;
+import com.notaskflow.domain.dto.request.ProjectDeleteRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberRoleUpdateRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberSaveRequest;
 import com.notaskflow.domain.dto.request.ProjectSaveRequest;
@@ -146,13 +147,16 @@ public class ProjectController {
      *
      * @param spaceId 空间标识
      * @param projectId 项目标识
+     * @param request 关联数据处理策略，为空时默认解除关联
      * @return 空响应
      */
     @SaCheckPermission("space:note:edit")
     @Operation(summary = "删除项目")
     @DeleteMapping("/{projectId}")
-    public ApiResponse<Void> delete(@PathVariable Long spaceId, @PathVariable Long projectId) {
-        projectService.delete(spaceId, projectId);
+    public ApiResponse<Void> delete(@PathVariable Long spaceId,
+                                    @PathVariable Long projectId,
+                                    @Validated @RequestBody(required = false) ProjectDeleteRequest request) {
+        projectService.delete(spaceId, projectId, request);
         return ApiResponse.success();
     }
 

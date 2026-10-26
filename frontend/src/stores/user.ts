@@ -78,6 +78,14 @@ export const useUserStore = defineStore('user', {
       const response = await authService.refresh()
       applyLoginState(this, response)
     },
+    /**
+     * 应用服务端返回的令牌信息（登录、静默续期共用）。
+     *
+     * @param payload 登录响应
+     */
+    applyLoginState(payload: LoginResponse) {
+      applyLoginState(this, payload)
+    },
     async fetchProfile() {
       const profile = await userService.profile()
       this.profile = profile ? { ...profile, avatarUrl: resolveAvatarUrl(profile.avatarUrl) } : profile

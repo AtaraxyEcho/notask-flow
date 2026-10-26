@@ -87,7 +87,7 @@ public class NoteExportServiceImpl implements NoteExportService {
     @Override
     public NoteExportFileVO export(Long spaceId, Long noteId, NoteExportFormat format) {
         NoteVO note = noteService.get(spaceId, noteId);
-        String html = buildExportHtml(note);
+        String html = stripExternalResources(buildExportHtml(note));
         byte[] content = switch (format) {
             case PDF -> renderPdf(html);
             case WORD -> renderWord(html);
@@ -98,6 +98,61 @@ public class NoteExportServiceImpl implements NoteExportService {
                 format.contentType(),
                 content
         );
+    }
+
+    /**
+     * 移除导出 HTML 中的外部资源引用，防止服务端渲染器被用于 SSRF。
+     *
+     * <p>openhtmltopdf 与 docx4j 在渲染时会主动发起 HTTP 请求拉取 {@code <img src>} 等资源，
+     * 攻击者可在笔记中写入内网地址探测服务。导出前统一剥离绝对 URL、样式中的 {@code url()}
+     * 以及可执行脚本元素，仅保留 {@code data:} 与相对路径资源。</p>
+     *
+     * @param html 原始导出 HTML
+     * @return 去除外部资源引用后的 HTML
+     */
+    private String stripExternalResources(String html) {
+        Document document = Jsoup.parse(html);
+        document.outputSettings()
+                .syntax(Document.OutputSettings.Syntax.xml)
+                .escapeMode(Entities.EscapeMode.xhtml)
+                .prettyPrint(false);
+        document.select("script, iframe, object, embed, link, meta[http-equiv=refresh]").remove();
+        Elements resourceElements = document.select("[src]");
+        for (Element element : resourceElements) {
+            stripExternalAttribute(element, "src");
+        }
+        for (Element element : document.select("[style]")) {
+            String style = element.attr("style");
+            if (style.toLowerCase().contains("url(")) {
+                element.removeAttr("style");
+            }
+        }
+        return "<!DOCTYPE html>\n" + document.outerHtml();
+    }
+
+    /**
+     * 移除元素上的外部地址属性，仅保留安全的值。
+     *
+     * @param element 元素
+     * @param attributeName 属性名
+     */
+    private void stripExternalAttribute(Element element, String attributeName) {
+        if (!element.hasAttr(attributeName)) {
+            return;
+        }
+        String value = element.attr(attributeName).trim();
+        if (!StringUtils.hasText(value)) {
+            element.removeAttr(attributeName);
+            return;
+        }
+        String lowerCaseValue = value.toLowerCase();
+        boolean safe = lowerCaseValue.startsWith("data:")
+                || lowerCaseValue.startsWith("#")
+                || (lowerCaseValue.startsWith("/") && !lowerCaseValue.startsWith("//"));
+        if (!safe) {
+            log.debug("导出时已移除外部资源引用：{}={}", attributeName, value);
+            element.removeAttr(attributeName);
+        }
     }
 
     private byte[] renderPdf(String html) {

@@ -1,11 +1,11 @@
-INSERT INTO nt_role (id, code, name, description)
+INSERT IGNORE INTO nt_role (id, code, name, description)
 VALUES
   (1, 'SPACE_OWNER', '空间所有者', '拥有空间全部权限'),
   (2, 'SPACE_ADMIN', '空间管理员', '管理空间成员和协作资源'),
   (3, 'SPACE_MEMBER', '空间成员', '使用空间协作功能'),
   (4, 'SPACE_GUEST', '只读访客', '只读访问空间资源');
 
-INSERT INTO nt_permission (id, code, name, description)
+INSERT IGNORE INTO nt_permission (id, code, name, description)
 VALUES
   (1, 'space:*', '空间全部权限', '空间内全部权限'),
   (2, 'space:member:view', '查看成员', '查看空间成员'),
@@ -25,7 +25,7 @@ VALUES
   (16, 'space:note:readonly', '只读笔记', '只读查看笔记'),
   (17, 'space:task:readonly', '只读任务', '只读查看任务');
 
-INSERT INTO nt_role_permission (role_id, permission_id)
+INSERT IGNORE INTO nt_role_permission (role_id, permission_id)
 VALUES
   (1, 1),
   (1, 2),
@@ -78,7 +78,7 @@ VALUES
   (4, 11),
   (4, 14);
 
-INSERT INTO nt_system_setting (setting_key, setting_value, description)
+INSERT IGNORE INTO nt_system_setting (setting_key, setting_value, description)
 VALUES
   ('auth.registration.enabled', 'true', '是否开放新用户注册'),
   ('auth.registration.email-verification-required', 'true', '注册是否必须验证邮箱'),

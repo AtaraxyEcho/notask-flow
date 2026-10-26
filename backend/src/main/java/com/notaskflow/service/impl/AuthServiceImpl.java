@@ -84,6 +84,12 @@ public class AuthServiceImpl implements AuthService {
 
     private static final Duration EMAIL_CODE_RATE_LIMIT_WINDOW = Duration.ofMinutes(5);
 
+    /** 邮箱验证码单次有效期内的最大校验失败次数。 */
+    private static final int EMAIL_CODE_MAX_VERIFY_FAILURES = 5;
+
+    /** 邮箱验证码校验失败计数窗口。 */
+    private static final Duration EMAIL_CODE_VERIFY_FAILURE_WINDOW = Duration.ofMinutes(30);
+
     private final UserMapper userMapper;
 
     private final RoleMapper roleMapper;
@@ -137,6 +143,7 @@ public class AuthServiceImpl implements AuthService {
         String code = StringGenerator.randomNumeric(REGISTER_EMAIL_CODE_LENGTH);
         String codeKey = buildRegisterEmailCodeKey(normalizedEmail);
         redisUtil.delete(codeKey);
+        redisUtil.delete(RedisKeyConstants.emailCodeVerifyFail("register", normalizedEmail));
         redisUtil.set(codeKey, code, REGISTER_EMAIL_CODE_TTL);
 
         boolean mailSent = mailNotificationService.sendRegisterCodeMail(normalizedEmail, code);
@@ -199,6 +206,7 @@ public class AuthServiceImpl implements AuthService {
         String code = StringGenerator.randomNumeric(PASSWORD_RESET_CODE_LENGTH);
         String codeKey = buildPasswordResetCodeKey(normalizedEmail);
         redisUtil.delete(codeKey);
+        redisUtil.delete(RedisKeyConstants.emailCodeVerifyFail("password-reset", normalizedEmail));
         clearPasswordResetTokenByEmail(normalizedEmail);
         redisUtil.set(codeKey, code, PASSWORD_RESET_CODE_TTL);
 
@@ -220,9 +228,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public PasswordResetVerifyResponse verifyResetCode(VerifyResetCodeRequest request) {
         String normalizedEmail = normalizeEmail(request.getEmail());
-        String cachedCode = redisUtil.getString(buildPasswordResetCodeKey(normalizedEmail));
+        String codeKey = buildPasswordResetCodeKey(normalizedEmail);
+        String failKey = RedisKeyConstants.emailCodeVerifyFail("password-reset", normalizedEmail);
+        ensureEmailCodeAttemptAllowed(failKey, codeKey);
+        String cachedCode = redisUtil.getString(codeKey);
         if (!StringUtils.hasText(cachedCode) || !cachedCode.equals(request.getCode().trim())) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "验证码错误或已过期");
+            recordEmailCodeFailure(failKey, codeKey);
         }
 
         User user = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getEmail, normalizedEmail));
@@ -230,7 +241,8 @@ public class AuthServiceImpl implements AuthService {
             throw new ResourceNotFoundException("用户不存在");
         }
 
-        redisUtil.delete(buildPasswordResetCodeKey(normalizedEmail));
+        redisUtil.delete(codeKey);
+        redisUtil.delete(failKey);
         clearPasswordResetTokenByEmail(normalizedEmail);
 
         String resetToken = StringGenerator.randomAlphanumeric(PASSWORD_RESET_TOKEN_LENGTH);
@@ -629,10 +641,44 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "邮箱验证码必须为6位数字");
         }
         String cachedCode = redisUtil.getString(buildRegisterEmailCodeKey(email));
+        String failKey = RedisKeyConstants.emailCodeVerifyFail("register", email);
+        String codeKey = buildRegisterEmailCodeKey(email);
+        ensureEmailCodeAttemptAllowed(failKey, codeKey);
         if (!StringUtils.hasText(cachedCode) || !cachedCode.equals(emailCode.trim())) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "邮箱验证码错误或已过期");
+            recordEmailCodeFailure(failKey, codeKey);
         }
-        redisUtil.delete(buildRegisterEmailCodeKey(email));
+        redisUtil.delete(codeKey);
+        redisUtil.delete(failKey);
+    }
+
+    /**
+     * 校验邮箱验证码前检查失败次数，超出上限后销毁验证码。
+     *
+     * @param failKey 失败计数键
+     * @param codeKey 验证码键
+     */
+    private void ensureEmailCodeAttemptAllowed(String failKey, String codeKey) {
+        Long failures = redisUtil.getLong(failKey);
+        if (failures != null && failures >= EMAIL_CODE_MAX_VERIFY_FAILURES) {
+            redisUtil.delete(codeKey);
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "验证码错误次数过多，请重新获取验证码");
+        }
+    }
+
+    /**
+     * 记录一次邮箱验证码校验失败，达到上限时销毁验证码。
+     *
+     * @param failKey 失败计数键
+     * @param codeKey 验证码键
+     */
+    private void recordEmailCodeFailure(String failKey, String codeKey) {
+        long failures = redisUtil.recordFailure(failKey, EMAIL_CODE_VERIFY_FAILURE_WINDOW);
+        if (failures >= EMAIL_CODE_MAX_VERIFY_FAILURES) {
+            redisUtil.delete(codeKey);
+            redisUtil.delete(failKey);
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "验证码错误次数过多，请重新获取验证码");
+        }
+        throw new BusinessException(ErrorCode.PARAM_ERROR, "验证码错误或已过期");
     }
 
     private void ensureRegistrationEnabled() {

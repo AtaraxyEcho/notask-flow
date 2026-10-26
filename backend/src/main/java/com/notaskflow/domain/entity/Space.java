@@ -26,4 +26,6 @@ public class Space extends BaseEntity {
     private Long ownerUserId;
 
     private Boolean joinApprovalRequired;
+
+    private Boolean memberInviteEnabled;
 }

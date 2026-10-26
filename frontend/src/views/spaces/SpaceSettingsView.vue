@@ -371,8 +371,6 @@ interface AdvancedSettingsState {
   memberInviteEnabled: boolean
 }
 
-const ADVANCED_SETTINGS_STORAGE_KEY = 'notask-flow-team-advanced-settings'
-
 const router = useRouter()
 const spaceStore = useSpaceStore()
 const userStore = useUserStore()
@@ -443,26 +441,13 @@ const visiblePendingRequests = computed(() => {
 })
 
 const loadAdvancedSettings = () => {
-  const spaceId = spaceStore.currentSpaceId
-  if (!spaceId) {
+  const currentSpace = spaceStore.currentSpace
+  if (!currentSpace) {
     return
   }
 
-  const rawValue = window.localStorage.getItem(`${ADVANCED_SETTINGS_STORAGE_KEY}:${spaceId}`)
-  if (!rawValue) {
-    advancedSettings.joinApprovalRequired = true
-    advancedSettings.memberInviteEnabled = false
-    return
-  }
-
-  try {
-    const parsed = JSON.parse(rawValue) as Partial<AdvancedSettingsState>
-    advancedSettings.joinApprovalRequired = parsed.joinApprovalRequired ?? true
-    advancedSettings.memberInviteEnabled = parsed.memberInviteEnabled ?? false
-  } catch {
-    advancedSettings.joinApprovalRequired = true
-    advancedSettings.memberInviteEnabled = false
-  }
+  advancedSettings.joinApprovalRequired = currentSpace.joinApprovalRequired ?? true
+  advancedSettings.memberInviteEnabled = currentSpace.memberInviteEnabled ?? true
 }
 
 const hydrate = async () => {
@@ -477,17 +462,10 @@ const saveSpaceName = async () => {
 }
 
 const saveAdvancedSettings = async () => {
-  if (!spaceStore.currentSpaceId) {
-    return
-  }
-
-  window.localStorage.setItem(
-    `${ADVANCED_SETTINGS_STORAGE_KEY}:${spaceStore.currentSpaceId}`,
-    JSON.stringify({
-      joinApprovalRequired: advancedSettings.joinApprovalRequired,
-      memberInviteEnabled: advancedSettings.memberInviteEnabled,
-    }),
-  )
+  await spaceStore.updateCurrentSpace(spaceName.value.trim(), {
+    joinApprovalRequired: advancedSettings.joinApprovalRequired,
+    memberInviteEnabled: advancedSettings.memberInviteEnabled,
+  })
   ElMessage.success(t('messages.advancedSettingsSaved'))
 }
 

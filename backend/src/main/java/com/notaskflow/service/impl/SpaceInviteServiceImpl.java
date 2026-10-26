@@ -78,9 +78,16 @@ public class SpaceInviteServiceImpl implements SpaceInviteService {
     @Override
     public SpaceInviteVO createInvite(Long spaceId, SpaceInviteCreateRequest request) {
         Long currentUserId = LoginUserUtil.currentUserId();
-        permissionValidator.ensureSpaceAdminOrOwner(spaceId, currentUserId);
         Space space = findSpace(spaceId);
         ensureTeamSpace(space);
+        permissionValidator.ensureSpaceCollaborator(spaceId, currentUserId);
+        boolean canGrantAnyRole = canManageSpace(space, currentUserId);
+        if (!canGrantAnyRole && Boolean.FALSE.equals(space.getMemberInviteEnabled())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "当前空间已关闭成员邀请功能");
+        }
+        if (!canGrantAnyRole && !RoleCode.SPACE_MEMBER.getCode().equals(request.getRoleCode())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "仅空间管理员可邀请非普通成员角色");
+        }
         Role role = findJoinableRole(request.getRoleCode());
         int expireMinutes = request.getExpireMinutes() == null ? defaultExpireMinutes : request.getExpireMinutes();
         Duration ttl = Duration.ofMinutes(expireMinutes);
@@ -157,6 +164,25 @@ public class SpaceInviteServiceImpl implements SpaceInviteService {
         log.info("用户通过邀请码加入团队，spaceId={}，userId={}，roleCode={}",
                 payload.getSpaceId(), userId, role.getCode());
         return toSpaceMemberVO(member);
+    }
+
+    /**
+     * 判断用户是否具备空间管理能力（所有者或管理员）。
+     *
+     * @param space 空间实体
+     * @param userId 用户标识
+     * @return true 表示可管理空间
+     */
+    private boolean canManageSpace(Space space, Long userId) {
+        if (userId.equals(space.getOwnerUserId())) {
+            return true;
+        }
+        SpaceMember member = permissionValidator.findSpaceMember(space.getId(), userId);
+        if (member == null) {
+            return false;
+        }
+        Role role = roleMapper.selectById(member.getRoleId());
+        return role != null && RoleCode.SPACE_ADMIN.getCode().equals(role.getCode());
     }
 
     /**

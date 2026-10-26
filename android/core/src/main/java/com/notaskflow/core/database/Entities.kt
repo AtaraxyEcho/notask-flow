@@ -29,6 +29,7 @@ data class NoteDraftEntity(
     @ColumnInfo(name = "notebook_id") val notebookId: Long?,
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "content") val content: String,
+    @ColumnInfo(name = "content_html") val contentHtml: String,
     @ColumnInfo(name = "updated_at") val updatedAt: Long
 )
 

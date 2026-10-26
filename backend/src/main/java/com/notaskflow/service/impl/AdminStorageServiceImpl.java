@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.domain.entity.Attachment;
 import com.notaskflow.domain.entity.BusinessAttachment;
+import com.notaskflow.domain.entity.ManagedFile;
 import com.notaskflow.domain.entity.Space;
 import com.notaskflow.domain.entity.User;
 import com.notaskflow.domain.vo.AdminOrphanCleanResultVO;
@@ -12,6 +13,7 @@ import com.notaskflow.domain.vo.AdminStorageRankVO;
 import com.notaskflow.domain.vo.AdminStorageSummaryVO;
 import com.notaskflow.mapper.AttachmentMapper;
 import com.notaskflow.mapper.BusinessAttachmentMapper;
+import com.notaskflow.mapper.ManagedFileMapper;
 import com.notaskflow.mapper.SpaceMapper;
 import com.notaskflow.mapper.UserMapper;
 import com.notaskflow.service.AdminStorageService;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,6 +54,8 @@ public class AdminStorageServiceImpl implements AdminStorageService {
     private final AttachmentMapper attachmentMapper;
 
     private final BusinessAttachmentMapper businessAttachmentMapper;
+
+    private final ManagedFileMapper managedFileMapper;
 
     private final UserMapper userMapper;
 
@@ -180,6 +185,9 @@ public class AdminStorageServiceImpl implements AdminStorageService {
     /**
      * 过滤孤立附件。
      *
+     * <p>仅当附件既未被业务对象绑定（{@code nt_business_attachment}），也未被网盘文件条目
+     * （{@code nt_file_item}）引用时，才判定为孤立附件，避免误删用户网盘中的独立文件。</p>
+     *
      * @param attachments 附件列表
      * @return 孤立附件列表
      */
@@ -187,11 +195,19 @@ public class AdminStorageServiceImpl implements AdminStorageService {
         if (attachments.isEmpty()) {
             return List.of();
         }
-        Set<Long> referencedAttachmentIds = businessAttachmentMapper.selectList(Wrappers.<BusinessAttachment>lambdaQuery()
+        Set<Long> referencedAttachmentIds = new HashSet<>();
+        businessAttachmentMapper.selectList(Wrappers.<BusinessAttachment>lambdaQuery()
                         .select(BusinessAttachment::getAttachmentId))
                 .stream()
                 .map(BusinessAttachment::getAttachmentId)
-                .collect(Collectors.toCollection(HashSet::new));
+                .filter(Objects::nonNull)
+                .forEach(referencedAttachmentIds::add);
+        managedFileMapper.selectList(Wrappers.<ManagedFile>lambdaQuery()
+                        .select(ManagedFile::getAttachmentId))
+                .stream()
+                .map(ManagedFile::getAttachmentId)
+                .filter(Objects::nonNull)
+                .forEach(referencedAttachmentIds::add);
         return attachments.stream()
                 .filter(attachment -> !referencedAttachmentIds.contains(attachment.getId()))
                 .toList();

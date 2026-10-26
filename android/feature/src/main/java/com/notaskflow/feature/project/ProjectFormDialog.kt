@@ -1,5 +1,7 @@
 package com.notaskflow.feature.project
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -112,12 +114,12 @@ fun ProjectFormDialog(
                     )
                 }
             ) {
-                Text("保存")
+                Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

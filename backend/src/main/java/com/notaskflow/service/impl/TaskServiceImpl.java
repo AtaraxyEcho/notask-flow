@@ -54,6 +54,7 @@ import com.notaskflow.service.NotificationService;
 import com.notaskflow.service.SpaceRealtimeEventService;
 import com.notaskflow.service.TaskService;
 import com.notaskflow.service.TaskStatusRecalculationService;
+import com.notaskflow.utils.SqlLikeUtils;
 import com.notaskflow.utils.LoginUserUtil;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -124,9 +125,9 @@ public class TaskServiceImpl implements TaskService {
                 .eq(Task::getSpaceId, spaceId)
                 .eq(query.getProjectId() != null, Task::getProjectId, query.getProjectId())
                 .and(StringUtils.hasText(query.getKeyword()), wrapperItem -> wrapperItem
-                        .like(Task::getTitle, query.getKeyword().trim())
+                        .like(Task::getTitle, SqlLikeUtils.escape(query.getKeyword()))
                         .or()
-                        .like(Task::getDescription, query.getKeyword().trim()))
+                        .like(Task::getDescription, SqlLikeUtils.escape(query.getKeyword())))
                 .eq(query.getMode() != null, Task::getMode, query.getMode())
                 .in(!taskIds.isEmpty(), Task::getId, taskIds)
                 .orderByDesc(Task::getGmtModified);
@@ -506,6 +507,7 @@ public class TaskServiceImpl implements TaskService {
             throw new ResourceNotFoundException("任务不存在");
         }
         Long currentUserId = LoginUserUtil.currentUserId();
+        permissionValidator.ensureSpaceCollaborator(task.getSpaceId(), currentUserId);
         if (!currentUserId.equals(comment.getUserId())) {
             permissionValidator.ensureSpaceAdminOrOwner(task.getSpaceId(), currentUserId);
         }

@@ -1,5 +1,7 @@
 package com.notaskflow.feature.task
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -88,7 +90,7 @@ fun TaskCreateRoute(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("新建任务", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.task_create_title), fontWeight = FontWeight.SemiBold)
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -240,7 +242,7 @@ private fun ProjectPicker(
     var expanded by remember { mutableStateOf(false) }
     val selectedProject = projects.firstOrNull { project -> project.id == selectedProjectId }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("归属项目", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.task_project), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Box {
             Row(
                 modifier = Modifier
@@ -270,7 +272,7 @@ private fun ProjectPicker(
                 onDismissRequest = { expanded = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("不关联项目") },
+                    text = { Text(stringResource(R.string.task_no_project)) },
                     onClick = {
                         onSelectProject(null)
                         expanded = false
@@ -297,7 +299,7 @@ private fun AssigneeSection(
     onToggleAssignee: (Long) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("指派成员", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.task_assign_members), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         if (members.isEmpty()) {
             Text(
                 text = "当前空间暂无可选成员",

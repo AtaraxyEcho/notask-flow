@@ -320,6 +320,7 @@ export interface Space {
   memberCount?: number
   unreadCount?: number
   joinApprovalRequired?: boolean
+  memberInviteEnabled?: boolean
   gmtCreate?: string
 }
 

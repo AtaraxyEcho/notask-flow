@@ -52,11 +52,11 @@ export default defineConfig(({ mode }) => {
                         }
                         if (normalizedId.includes('/@tiptap/')
                             || normalizedId.includes('/prosemirror-')
-                            || normalizedId.includes('/y-prosemirror/')) {
+                            || normalizedId.includes('/y-prosemirror/')
+                            || normalizedId.includes('/yjs/')
+                            || normalizedId.includes('/y-protocols/')
+                            || normalizedId.includes('/lib0/')) {
                             return 'vendor-editor';
-                        }
-                        if (normalizedId.includes('/yjs/') || normalizedId.includes('/y-protocols/') || normalizedId.includes('/lib0/')) {
-                            return 'vendor-collaboration';
                         }
                         if (normalizedId.includes('/@vue-office/') || normalizedId.includes('/pdfjs-dist/') || normalizedId.includes('/jszip/')) {
                             return 'vendor-office';

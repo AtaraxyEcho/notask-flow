@@ -93,6 +93,18 @@ public interface NoteService {
     NoteVO createCheckpoint(Long spaceId, Long id, CollabContentSaveRequest request);
 
     /**
+     * 协同服务兜底保存笔记正文快照（无用户上下文）。
+     *
+     * <p>仅在协同房间销毁前调用，用于客户端崩溃或页面强制关闭后的内容恢复。</p>
+     *
+     * @param id 笔记标识
+     * @param content 纯文本正文
+     * @param contentHtml 富文本 HTML
+     * @return 笔记详情
+     */
+    NoteVO saveCollabContentSnapshot(Long id, String content, String contentHtml);
+
+    /**
      * 删除笔记。
      *
      * @param spaceId 空间标识

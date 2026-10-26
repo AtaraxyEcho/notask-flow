@@ -29,6 +29,7 @@ class NoteDraftRepositoryImpl @Inject constructor(
             notebookId = notebookId,
             title = title,
             content = content,
+            contentHtml = contentHtml,
             updatedAt = updatedAt
         )
     }
@@ -40,6 +41,7 @@ class NoteDraftRepositoryImpl @Inject constructor(
             notebookId = notebookId,
             title = title,
             content = content,
+            contentHtml = contentHtml,
             updatedAt = updatedAt
         )
     }

@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TodoEntity::class,
         OfflineQueueEntry::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class NotaskFlowDatabase : RoomDatabase() {
@@ -42,6 +42,12 @@ abstract class NotaskFlowDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE note_drafts ADD COLUMN content_html TEXT NOT NULL DEFAULT ''")
             }
         }
     }

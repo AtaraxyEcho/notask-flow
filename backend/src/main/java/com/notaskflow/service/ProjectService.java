@@ -2,6 +2,7 @@ package com.notaskflow.service;
 
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.domain.dto.request.ProjectArchiveRequest;
+import com.notaskflow.domain.dto.request.ProjectDeleteRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberRoleUpdateRequest;
 import com.notaskflow.domain.dto.request.ProjectMemberSaveRequest;
 import com.notaskflow.domain.dto.request.ProjectSaveRequest;
@@ -79,6 +80,15 @@ public interface ProjectService {
      * @param projectId 项目标识
      */
     void delete(Long spaceId, Long projectId);
+
+    /**
+     * 删除项目并按指定策略处理关联任务与文档。
+     *
+     * @param spaceId 空间标识
+     * @param projectId 项目标识
+     * @param request 关联数据处理策略
+     */
+    void delete(Long spaceId, Long projectId, ProjectDeleteRequest request);
 
     /**
      * 查询项目成员。

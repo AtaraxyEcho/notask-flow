@@ -20,6 +20,8 @@ public final class RedisKeyConstants {
 
     public static final String USER_EMAIL_CHANGE_CODE_PREFIX = "notask:user:email-change-code:";
 
+    public static final String EMAIL_CODE_VERIFY_FAIL_PREFIX = "notask:auth:email-code-verify-fail:";
+
     public static final String COLLAB_TICKET_PREFIX = "notask:collab:ticket:";
 
     public static final String SPACE_EVENT_TICKET_PREFIX = "notask:space-event:ticket:";
@@ -47,6 +49,8 @@ public final class RedisKeyConstants {
     public static final String LOGIN_SESSION_PREFIX = "notask:session:";
 
     public static final String TOKEN_SESSION_PREFIX = "notask:token-session:";
+
+    public static final String SESSION_TOKENS_PREFIX = "notask:session-tokens:";
 
     public static final String USER_SESSIONS_PREFIX = "notask:user:sessions:";
 
@@ -108,6 +112,17 @@ public final class RedisKeyConstants {
     }
 
     /**
+     * 构造邮箱验证码校验失败计数器键。
+     *
+     * @param scene 校验场景
+     * @param identity 校验身份
+     * @return Redis 键
+     */
+    public static String emailCodeVerifyFail(String scene, String identity) {
+        return EMAIL_CODE_VERIFY_FAIL_PREFIX + scene + ":" + identity;
+    }
+
+    /**
      * 构造限流键。
      *
      * @param scene 限流场景
@@ -164,6 +179,16 @@ public final class RedisKeyConstants {
      */
     public static String tokenSessionPattern() {
         return TOKEN_SESSION_PREFIX + "*";
+    }
+
+    /**
+     * 构造会话反向令牌索引键。
+     *
+     * @param sessionId 会话标识
+     * @return Redis 键
+     */
+    public static String sessionTokens(String sessionId) {
+        return SESSION_TOKENS_PREFIX + sessionId;
     }
 
     /**

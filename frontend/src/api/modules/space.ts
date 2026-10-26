@@ -11,7 +11,10 @@ export const spaceService = {
   create(payload: { name: string }) {
     return http.post<Space>('/spaces', payload)
   },
-  update(spaceId: number, payload: { name: string }) {
+  update(
+    spaceId: number,
+    payload: { name: string; joinApprovalRequired?: boolean; memberInviteEnabled?: boolean },
+  ) {
     return http.put<Space>(`/spaces/${spaceId}`, payload)
   },
   delete(spaceId: number) {

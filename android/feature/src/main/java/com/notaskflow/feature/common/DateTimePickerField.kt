@@ -1,5 +1,7 @@
 package com.notaskflow.feature.common
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -129,12 +131,12 @@ fun DateTimePickerField(
                             }
                     }
                 ) {
-                    Text("下一步")
+                    Text(stringResource(R.string.common_next))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         ) {
@@ -151,7 +153,7 @@ fun DateTimePickerField(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("选择时间") },
+            title = { Text(stringResource(R.string.common_pick_time)) },
             text = {
                 TimePicker(state = timePickerState)
             },
@@ -166,12 +168,12 @@ fun DateTimePickerField(
                         showTimePicker = false
                     }
                 ) {
-                    Text("确定")
+                    Text(stringResource(R.string.common_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )

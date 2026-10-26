@@ -1,5 +1,7 @@
 package com.notaskflow.core.ui.components
 
+import com.notaskflow.core.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,7 +91,7 @@ fun ErrorState(
             if (onRetry != null) {
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedButton(onClick = onRetry) {
-                    Text("重试")
+                    Text(stringResource(R.string.common_retry))
                 }
             }
         }

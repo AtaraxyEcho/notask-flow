@@ -236,12 +236,19 @@ export const useSpaceStore = defineStore('space', {
       ElMessage.success(translate('messages.teamSpaceCreated'))
       return space
     },
-    async updateCurrentSpace(name: string) {
+    async updateCurrentSpace(
+      name: string,
+      advancedSettings?: { joinApprovalRequired?: boolean; memberInviteEnabled?: boolean },
+    ) {
       if (!this.currentSpaceId) {
         return null
       }
 
-      const updated = await spaceService.update(this.currentSpaceId, { name })
+      const updated = await spaceService.update(this.currentSpaceId, {
+        name,
+        joinApprovalRequired: advancedSettings?.joinApprovalRequired,
+        memberInviteEnabled: advancedSettings?.memberInviteEnabled,
+      })
       await this.refreshSpaces()
       ElMessage.success(translate('messages.spaceNameUpdated'))
       return updated

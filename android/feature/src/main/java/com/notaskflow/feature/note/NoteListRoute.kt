@@ -1,5 +1,7 @@
 package com.notaskflow.feature.note
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -156,7 +158,7 @@ fun NoteListRoute(
                 }
 
                 if (spaceId == null) {
-                    item { StateText("请先选择空间") }
+                    item { StateText(stringResource(R.string.common_select_space_first)) }
                 } else if (uiState.isLoading && uiState.notes.isEmpty()) {
                     item {
                         Box(
@@ -171,7 +173,7 @@ fun NoteListRoute(
                 } else if (uiState.errorMessage != null && uiState.notes.isEmpty()) {
                     item { StateText(uiState.errorMessage ?: "加载失败") }
                 } else if (uiState.notes.isEmpty()) {
-                    item { StateText("暂无笔记") }
+                    item { StateText(stringResource(R.string.note_empty)) }
                 } else {
                     items(uiState.notes, key = { note -> "note-${note.id}" }) { note ->
                         SwipeDeleteContainer(
@@ -202,7 +204,7 @@ fun NoteListRoute(
     if (showCreateNotebookDialog) {
         AlertDialog(
             onDismissRequest = { showCreateNotebookDialog = false },
-            title = { Text("新建笔记本") },
+            title = { Text(stringResource(R.string.note_create_notebook)) },
             text = {
                 NotaskFilledTextField(
                     value = notebookName,
@@ -220,12 +222,12 @@ fun NoteListRoute(
                         showCreateNotebookDialog = false
                     }
                 ) {
-                    Text("创建")
+                    Text(stringResource(R.string.common_create))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateNotebookDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -234,8 +236,8 @@ fun NoteListRoute(
     pendingDeleteNote?.let { note ->
         AlertDialog(
             onDismissRequest = { pendingDeleteNote = null },
-            title = { Text("删除笔记") },
-            text = { Text("确定删除“${note.title}”吗？删除后将无法在当前列表中继续访问。") },
+            title = { Text(stringResource(R.string.note_delete_title)) },
+            text = { Text(stringResource(R.string.note_delete_confirm, note.title)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -243,12 +245,12 @@ fun NoteListRoute(
                         pendingDeleteNote = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteNote = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -257,8 +259,8 @@ fun NoteListRoute(
     pendingDeleteNotebook?.let { notebook ->
         AlertDialog(
             onDismissRequest = { pendingDeleteNotebook = null },
-            title = { Text("删除笔记本") },
-            text = { Text("确定删除“${notebook.name}”吗？如果笔记本内仍有内容，后端可能会拒绝删除。") },
+            title = { Text(stringResource(R.string.note_delete_notebook_title)) },
+            text = { Text(stringResource(R.string.note_delete_notebook_confirm, notebook.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -266,12 +268,12 @@ fun NoteListRoute(
                         pendingDeleteNotebook = null
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteNotebook = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -338,7 +340,7 @@ private fun NoteCard(note: Note, onClick: () -> Unit) {
 private fun NotebookDrawerContent(
     notebooks: List<Notebook>,
     selectedNotebookId: Long?,
-    onNotebookClick: (Long) -> Unit,
+    onNotebookClick: (Long?) -> Unit,
     onNotebookMoveToParent: (Notebook, Long?) -> Unit,
     onNotebookDropToTrash: (Notebook) -> Unit,
     onCreateNotebook: () -> Unit
@@ -362,6 +364,12 @@ private fun NotebookDrawerContent(
         Spacer(Modifier.height(8.dp))
         HorizontalDivider()
         Spacer(Modifier.height(8.dp))
+        NotebookDrawerRow(
+            name = stringResource(R.string.note_all_notes),
+            selected = selectedNotebookId == null,
+            onClick = { onNotebookClick(null) }
+        )
+        Spacer(Modifier.height(4.dp))
         notebooks.forEach { notebook ->
             NotebookTreeItem(
                 node = notebook,
@@ -386,7 +394,7 @@ private fun NotebookDrawerContent(
         TextButton(onClick = onCreateNotebook, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("新建笔记本")
+            Text(stringResource(R.string.note_create_notebook))
         }
     }
 }
@@ -531,6 +539,28 @@ private fun DraggableNotebookRow(
                 )
             }
             .onGloballyPositioned { coordinates -> onPositioned(coordinates.boundsInWindow()) }
+    )
+}
+
+/**
+ * 抽屉顶部的「全部笔记」入口行。
+ *
+ * @param name 显示名称
+ * @param selected 是否选中
+ * @param onClick 点击回调
+ */
+@Composable
+private fun NotebookDrawerRow(
+    name: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    NotebookRow(
+        name = name,
+        subtitle = null,
+        selected = selected,
+        depth = 0,
+        onClick = onClick
     )
 }
 

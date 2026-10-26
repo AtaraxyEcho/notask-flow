@@ -44,5 +44,18 @@ public class SecurityProperties {
 
     /** 浏览器权限策略。 */
     private String permissionsPolicy = "camera=(), microphone=(), geolocation=(), payment=()";
+
+    /**
+     * 受信任反向代理网段（CIDR）。
+     *
+     * <p>仅当直连来源地址命中该列表时才解析 {@code X-Forwarded-For} / {@code X-Real-IP}，
+     * 避免客户端伪造审计日志 IP。默认信任回环与私有网段（容器网络 / 同机 Nginx）。</p>
+     */
+    private List<String> trustedProxies = new ArrayList<>(List.of(
+            "127.0.0.0/8",
+            "::1/128",
+            "10.0.0.0/8",
+            "172.16.0.0/12",
+            "192.168.0.0/16"));
 }
 

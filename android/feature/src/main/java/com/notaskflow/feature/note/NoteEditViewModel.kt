@@ -149,7 +149,7 @@ class NoteEditViewModel @Inject constructor(
                         notebooks = notebooks,
                         title = draft?.title ?: it.title,
                         content = draft?.content ?: it.content,
-                        contentHtml = draft?.content?.let(::renderPlainDocumentHtml),
+                        contentHtml = draft?.contentHtml?.takeIf { it.isNotBlank() } ?: draft?.content?.let(::renderPlainDocumentHtml),
                         documentDate = null,
                         selectedNotebookId = draft?.notebookId ?: notebooks.firstOrNull()?.id,
                         collabEnabled = it.collabEnabled,
@@ -169,7 +169,8 @@ class NoteEditViewModel @Inject constructor(
                     notebooks = notebooks,
                     title = draft?.title ?: note?.title ?: state.title,
                     content = draft?.content ?: note?.content ?: state.content,
-                    contentHtml = draft?.content?.let(::renderPlainDocumentHtml)
+                    contentHtml = draft?.contentHtml?.takeIf { it.isNotBlank() }
+                        ?: draft?.content?.let(::renderPlainDocumentHtml)
                         ?: note?.contentHtml
                         ?: note?.content?.let(::renderPlainDocumentHtml),
                     documentDate = note?.gmtModified ?: note?.gmtCreate,
@@ -1043,6 +1044,7 @@ class NoteEditViewModel @Inject constructor(
                     notebookId = state.selectedNotebookId,
                     title = state.title,
                     content = state.content,
+                    contentHtml = state.contentHtml.orEmpty(),
                     updatedAt = System.currentTimeMillis()
                 )
             )

@@ -3,6 +3,7 @@ package com.notaskflow.service;
 import com.notaskflow.common.PageResponse;
 import com.notaskflow.domain.dto.request.TodoSaveRequest;
 import com.notaskflow.domain.query.TodoQuery;
+import com.notaskflow.domain.vo.TodoCountsVO;
 import com.notaskflow.domain.vo.TodoVO;
 
 /**
@@ -20,6 +21,14 @@ public interface TodoService {
      * @return 分页待办
      */
     PageResponse<TodoVO> page(Long spaceId, TodoQuery query);
+
+    /**
+     * 统计当前用户待办数量。
+     *
+     * @param spaceId 空间标识
+     * @return 待办数量统计
+     */
+    TodoCountsVO counts(Long spaceId);
 
     /**
      * 查询待办详情。

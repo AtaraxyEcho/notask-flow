@@ -1,5 +1,7 @@
 package com.notaskflow.core.ui.components
 
+import com.notaskflow.core.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -212,7 +214,7 @@ fun SpaceSwitcher(
                     ) {
                         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("新建团队")
+                        Text(stringResource(R.string.home_create_team))
                     }
                     OutlinedButton(
                         onClick = {
@@ -225,7 +227,7 @@ fun SpaceSwitcher(
                 ) {
                     Icon(Icons.Filled.Groups, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("加入团队")
+                    Text(stringResource(R.string.home_join_team))
                 }
                 }
             }

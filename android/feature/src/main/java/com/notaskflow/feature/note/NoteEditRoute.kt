@@ -1,5 +1,6 @@
 package com.notaskflow.feature.note
 
+import com.notaskflow.feature.R
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ClipData
@@ -121,6 +122,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -405,15 +407,15 @@ fun NoteEditRoute(
                             onDismissRequest = { moreMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("分享") },
+                                text = { Text(stringResource(R.string.note_share)) },
                                 leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
                                 onClick = {
                                     moreMenuExpanded = false
-                                    viewModel.share()
+                                    showShareDialog = true
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("版本历史") },
+                                text = { Text(stringResource(R.string.note_version_history)) },
                                 leadingIcon = { Icon(Icons.Filled.History, contentDescription = null) },
                                 onClick = {
                                     moreMenuExpanded = false
@@ -422,7 +424,7 @@ fun NoteEditRoute(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("附件管理") },
+                                text = { Text(stringResource(R.string.note_attachment_manage)) },
                                 leadingIcon = { Icon(Icons.Filled.AttachFile, contentDescription = null) },
                                 onClick = {
                                     moreMenuExpanded = false
@@ -431,7 +433,7 @@ fun NoteEditRoute(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("设置纸张底纹") },
+                                text = { Text(stringResource(R.string.note_paper_texture)) },
                                 leadingIcon = { Icon(Icons.Filled.Palette, contentDescription = null) },
                                 onClick = {
                                     moreMenuExpanded = false
@@ -439,7 +441,7 @@ fun NoteEditRoute(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("导出") },
+                                text = { Text(stringResource(R.string.note_export)) },
                                 leadingIcon = { Icon(Icons.Filled.Download, contentDescription = null) },
                                 enabled = !uiState.isExporting,
                                 onClick = {
@@ -448,7 +450,7 @@ fun NoteEditRoute(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("删除", color = MaterialTheme.colorScheme.error) },
+                                text = { Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(
                                         Icons.Filled.Delete,
@@ -642,7 +644,7 @@ fun NoteEditRoute(
     if (showShareDialog) {
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
-            title = { Text("生成分享链接") },
+            title = { Text(stringResource(R.string.note_generate_share_link)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
@@ -666,7 +668,7 @@ fun NoteEditRoute(
                         showShareDialog = false
                     }
                 ) {
-                    Text("生成链接")
+                    Text(stringResource(R.string.note_generate_link))
                 }
             },
             dismissButton = {
@@ -677,7 +679,7 @@ fun NoteEditRoute(
                         showShareDialog = false
                     }
                 ) {
-                    Text("长期有效")
+                    Text(stringResource(R.string.note_permanent))
                 }
             }
         )
@@ -686,7 +688,7 @@ fun NoteEditRoute(
     shareLink?.let { link ->
         AlertDialog(
             onDismissRequest = { shareLink = null },
-            title = { Text("分享链接已生成") },
+            title = { Text(stringResource(R.string.note_share_link_generated)) },
             text = {
                 Text(
                     text = link,
@@ -695,7 +697,7 @@ fun NoteEditRoute(
             },
             confirmButton = {
                 TextButton(onClick = { shareLink = null }) {
-                    Text("知道了")
+                    Text(stringResource(R.string.note_got_it))
                 }
             }
         )
@@ -704,8 +706,8 @@ fun NoteEditRoute(
     if (showExitConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showExitConfirmDialog = false },
-            title = { Text("退出编辑？") },
-            text = { Text("当前笔记还有未保存内容，退出后可能丢失最新修改。") },
+            title = { Text(stringResource(R.string.note_exit_edit_title)) },
+            text = { Text(stringResource(R.string.note_exit_edit_confirm)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -717,12 +719,12 @@ fun NoteEditRoute(
                         }
                     }
                 ) {
-                    Text("退出")
+                    Text(stringResource(R.string.note_exit))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmDialog = false }) {
-                    Text("继续编辑")
+                    Text(stringResource(R.string.note_continue_edit))
                 }
             }
         )
@@ -731,8 +733,8 @@ fun NoteEditRoute(
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("删除笔记") },
-            text = { Text("确定删除当前笔记吗？删除后可在列表重新加载确认状态。") },
+            title = { Text(stringResource(R.string.note_delete_title)) },
+            text = { Text(stringResource(R.string.note_delete_confirm_short)) },
             confirmButton = {
                 Button(
                     enabled = !uiState.isSaving,
@@ -741,12 +743,12 @@ fun NoteEditRoute(
                         showDeleteConfirmDialog = false
                     }
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -790,8 +792,8 @@ fun NoteEditRoute(
     pendingExternalFile?.let { file ->
         AlertDialog(
             onDismissRequest = { pendingExternalFile = null },
-            title = { Text("打开附件") },
-            text = { Text("是否打开“${file.name}”？") },
+            title = { Text(stringResource(R.string.note_open_attachment)) },
+            text = { Text(stringResource(R.string.note_open_attachment_confirm, file.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -806,12 +808,12 @@ fun NoteEditRoute(
                         pendingExternalFile = null
                     }
                 ) {
-                    Text("打开")
+                    Text(stringResource(R.string.task_open))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingExternalFile = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -2352,7 +2354,7 @@ private fun ExportTypeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("选择导出类型") },
+        title = { Text(stringResource(R.string.note_export_type_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExportTypeItem("PDF", isExporting, onExportPdf)
@@ -2363,7 +2365,7 @@ private fun ExportTypeDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -2419,7 +2421,7 @@ private fun ExportResultDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("导出完成") },
+        title = { Text(stringResource(R.string.note_export_done)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
@@ -2452,7 +2454,7 @@ private fun ExportResultDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("完成")
+                Text(stringResource(R.string.common_done))
             }
         }
     )
@@ -2524,7 +2526,7 @@ private fun TableGridPicker(
         ) {
             Icon(Icons.Filled.TableChart, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("插入表格")
+            Text(stringResource(R.string.note_insert_table))
         }
     }
 }
@@ -2585,13 +2587,13 @@ private fun FileReferenceSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("附件引用", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.note_attachment_ref), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxWidth().height(96.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (files.isEmpty()) {
-                Text("暂无可引用文件", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.note_no_ref_files), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 files.forEach { file ->
                     Row(
@@ -4087,7 +4089,7 @@ private fun NoteHistorySheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("版本历史", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.note_version_history), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 if (histories.isNotEmpty()) {
                     Text(
                         text = "${histories.size} 个版本，可点选预览",
@@ -4101,7 +4103,7 @@ private fun NoteHistorySheet(
                     CircularProgressIndicator()
                 }
             } else if (histories.isEmpty()) {
-                Text("暂无历史版本", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.note_no_history), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 histories.forEach { history ->
                     Row(
@@ -4137,7 +4139,7 @@ private fun NoteHistorySheet(
                             )
                         }
                         Button(onClick = { onRestore(history.version) }) {
-                            Text("恢复")
+                            Text(stringResource(R.string.common_restore))
                         }
                     }
                 }
@@ -4202,7 +4204,7 @@ private fun NoteAttachmentSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("附件管理", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.note_attachment_manage), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 TextButton(
                     onClick = onUpload,
                     enabled = !isUploading && activeAttachmentId == null
@@ -4224,7 +4226,7 @@ private fun NoteAttachmentSheet(
                     CircularProgressIndicator()
                 }
             } else if (attachments.isEmpty()) {
-                Text("当前笔记暂无附件", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.note_no_attachments), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 attachments.forEach { attachment ->
                     Row(

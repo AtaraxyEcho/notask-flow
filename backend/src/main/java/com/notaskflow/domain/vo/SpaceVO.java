@@ -30,5 +30,7 @@ public class SpaceVO {
 
     private Boolean joinApprovalRequired;
 
+    private Boolean memberInviteEnabled;
+
     private LocalDateTime gmtCreate;
 }

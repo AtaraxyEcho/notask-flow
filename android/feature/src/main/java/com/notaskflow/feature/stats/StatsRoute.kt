@@ -1,5 +1,7 @@
 package com.notaskflow.feature.stats
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -113,7 +115,7 @@ fun StatsRoute(
             )
         }
         if (isTeamSpace && spaceId == null) {
-            item { StateText("请先选择空间") }
+            item { StateText(stringResource(R.string.common_select_space_first)) }
         } else if (uiState.isLoading && uiState.trends.isEmpty() && uiState.loads.isEmpty() && uiState.personalStats == null) {
             item {
                 Box(
@@ -136,20 +138,20 @@ fun StatsRoute(
             }
             if (isTeamSpace) {
                 item {
-                    Text("成员负载", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.stats_member_load), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
                 if (uiState.loads.isEmpty()) {
-                    item { StateText("暂无负载数据") }
+                    item { StateText(stringResource(R.string.stats_no_load)) }
                 } else {
                     items(uiState.loads, key = { load -> "member-load-${load.userId}" }) { load ->
                         LoadRow(load)
                     }
                 }
                 item {
-                    Text("近期动态", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.stats_recent_activity), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
                 if (uiState.activities.isEmpty()) {
-                    item { StateText("暂无动态") }
+                    item { StateText(stringResource(R.string.stats_no_activity)) }
                 } else {
                     items(uiState.activities, key = { activity -> "activity-${activity.time}-${activity.memberUserId}" }) { activity ->
                         ActivityListItem(activity = activity)
@@ -157,10 +159,10 @@ fun StatsRoute(
                 }
             } else {
                 item {
-                    Text("笔记趋势", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.stats_note_trend), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
                 if (uiState.personalNoteTrends.isEmpty()) {
-                    item { StateText("暂无趋势数据") }
+                    item { StateText(stringResource(R.string.stats_no_trend)) }
                 } else {
                     item {
                         PersonalNoteTrendChart(uiState.personalNoteTrends)
@@ -191,7 +193,7 @@ private fun PersonalNoteTrendChart(trends: List<PersonalNoteTrend>) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("近 7 日笔记趋势", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.stats_note_trend_7d), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ChartLegend(color = MaterialTheme.colorScheme.primary, label = "新建")
                     ChartLegend(color = MaterialTheme.colorScheme.tertiary, label = "更新")

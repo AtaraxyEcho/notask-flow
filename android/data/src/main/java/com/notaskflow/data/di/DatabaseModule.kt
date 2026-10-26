@@ -25,7 +25,7 @@ object DatabaseModule {
             context,
             NotaskFlowDatabase::class.java,
             DATABASE_NAME
-        ).addMigrations(NotaskFlowDatabase.MIGRATION_2_3)
+        ).addMigrations(NotaskFlowDatabase.MIGRATION_2_3, NotaskFlowDatabase.MIGRATION_3_4)
             .build()
     }
 

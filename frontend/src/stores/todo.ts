@@ -45,6 +45,15 @@ const createSummaryQuery = (query: TodoQuery, isCompleted?: boolean): TodoQuery 
 })
 
 const loadSummary = async (spaceId: number, query: TodoQuery): Promise<TodoSummary> => {
+  if (!query.keyword?.trim()) {
+    const counts = await todoService.counts(spaceId)
+    return {
+      completed: counts.completedCount,
+      total: counts.totalCount,
+      unfinished: counts.pendingCount,
+    }
+  }
+
   const [allPage, completedPage, unfinishedPage] = await Promise.all([
     todoService.page(spaceId, createSummaryQuery(query)),
     todoService.page(spaceId, createSummaryQuery(query, true)),

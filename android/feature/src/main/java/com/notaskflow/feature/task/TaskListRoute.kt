@@ -1,5 +1,7 @@
 package com.notaskflow.feature.task
 
+import com.notaskflow.feature.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -141,7 +143,7 @@ fun TaskListRoute(
             }
 
             if (spaceId == null) {
-                item { StateText("请先选择空间") }
+                item { StateText(stringResource(R.string.common_select_space_first)) }
             } else if (uiState.isLoading && uiState.tasks.isEmpty()) {
                 item {
                     Box(
@@ -156,7 +158,7 @@ fun TaskListRoute(
             } else if (uiState.errorMessage != null && uiState.tasks.isEmpty()) {
                 item { StateText(uiState.errorMessage ?: "加载失败") }
             } else if (uiState.tasks.isEmpty() && viewMode == TaskViewMode.List) {
-                item { StateText("暂无任务") }
+                item { StateText(stringResource(R.string.task_empty)) }
             } else {
                 item {
                     AnimatedContent(
@@ -380,7 +382,7 @@ private fun TaskCard(task: Task, onClick: () -> Unit) {
 
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("进度", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.task_progress), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
                     "${(progress * 100).toInt()}%",
                     style = MaterialTheme.typography.bodySmall,
